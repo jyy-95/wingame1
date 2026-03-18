@@ -10,9 +10,13 @@ const CombatResolver = preload("res://scripts/core/combat_resolver.gd")
 const PieceStats = preload("res://scripts/core/piece_stats.gd")
 const BoardManager = preload("res://scripts/ui/board_manager.gd")
 const EnemyActor = preload("res://scripts/ui/enemy_actor.gd")
+const IconBadge = preload("res://scripts/ui/icon_badge.gd")
 
-const LANE_SIZE := Vector2(640, 520)
-const LEAK_LINE_Y := 486.0
+const LANE_COUNT := 4
+const MAX_LOG_LINES := 14
+const TOTEM_BASE_COST := 60
+const TOTEM_COST_STEP := 20
+const BOARD_BASE_SIZE := Vector2(1600, 900)
 
 var run_state: RunState
 var economy_system := SummonEconomySystem.new()
@@ -23,10 +27,10 @@ var wave_director := WaveDirector.new()
 var combat_resolver := CombatResolver.new()
 var board_manager := BoardManager.new()
 
-var stages: Array[StageDef] = []
+var stages: Array = []
 var current_stage_index := 0
-var current_stage: StageDef
-var summon_preview_ids: Array[String] = []
+var current_stage
+var random_hint_ids: Array[String] = []
 var boss_spawned := false
 var bonus_elite_spawned := false
 var wave_bombard_applied := false
@@ -34,99 +38,563 @@ var battle_paused := true
 var run_finished := false
 var current_wave_reward_processed := false
 var log_lines: Array[String] = []
+var battle_speed := 1.0
 
 var modal_mode := ""
 var modal_choices: Array = []
 var modal_context: Dictionary = {}
 
+var stage_kicker_label: Label
 var stage_label: Label
-var gold_label: Label
-var hp_label: Label
-var wave_label: Label
-var totem_label: RichTextLabel
-var trait_label: RichTextLabel
-var damage_label: RichTextLabel
-var preview_box: VBoxContainer
-var log_label: RichTextLabel
+var wave_badge_label: Label
+var enemy_badge_label: Label
+var trait_badge_label: Label
+var gold_value_label: Label
+var summon_cost_label: Label
+var core_meta_label: Label
+var core_value_label: Label
+var core_fill: ColorRect
+var totem_icon: IconBadge
+var totem_name_label: Label
+var totem_desc_label: RichTextLabel
+var totem_charge_label: Label
+var random_hint_label: Label
+var deploy_title_label: Label
+var deploy_hint_label: Label
 var summon_button: Button
-var refresh_button: Button
-var enemy_layer: Control
-var board_grid: GridContainer
-var overlay: ColorRect
-var modal_title: Label
-var modal_subtitle: RichTextLabel
-var modal_options_box: VBoxContainer
-var modal_reroll_button: Button
+var summon_button_cost_label: Label
+var totem_button: Button
+var totem_button_cost_label: Label
 var prev_button: Button
 var restart_button: Button
 var next_button: Button
 var language_title_label: Label
 var language_option: OptionButton
-var controls_title_label: Label
-var preview_title_label: Label
-var log_title_label: Label
-var run_info_title_label: Label
-var traits_title_label: Label
-var damage_title_label: Label
-var core_title_label: Label
-var board_title_label: Label
+var quick_speed_button: Button
+var quick_speed_label: Label
+var quick_stats_button: Button
+var quick_stats_label: Label
+var quick_log_button: Button
+var quick_log_label: Label
+var wave_status_label: Label
+var trait_label: RichTextLabel
+var damage_label: RichTextLabel
+var log_label: RichTextLabel
+var enemy_layer: Control
+var effect_layer: Control
+var lane_guides: Array[PanelContainer] = []
+var leak_line: ColorRect
+var board_grid: GridContainer
+var overlay: ColorRect
+var modal_title: Label
+var modal_subtitle: RichTextLabel
+var modal_options_box: GridContainer
+var modal_reroll_button: Button
+var threat_badge: IconBadge
+var stats_panel: PanelContainer
+var log_panel: PanelContainer
+var shell_root: Control
+var board_backdrop: PanelContainer
+var top_row: Control
+var top_stage_stack: VBoxContainer
+var top_utility_box: HBoxContainer
+var left_rail: VBoxContainer
+var right_rail: VBoxContainer
+var totem_card: PanelContainer
+var threat_wrap: PanelContainer
+var battlefield_frame: PanelContainer
+var deploy_panel: PanelContainer
+var bottom_bar: HBoxContainer
+var money_panel: PanelContainer
+var core_panel: PanelContainer
+var actions_panel: PanelContainer
 
 func _ready() -> void:
 	add_child(board_manager)
 	board_manager.evolution_ready.connect(_on_evolution_ready)
-	board_manager.board_changed.connect(_refresh_sidebar_panels)
+	board_manager.board_changed.connect(_refresh_status_panels)
 	board_manager.piece_sold.connect(_on_piece_sold)
 	if not Localization.language_changed.is_connected(_on_language_changed):
 		Localization.language_changed.connect(_on_language_changed)
 	_build_layout()
+	_apply_responsive_layout()
 	_apply_localization()
 	stages = GameData.get_stage_list()
 	current_stage_index = clampi(SaveService.unlocked_stage_index, 0, max(0, stages.size() - 1))
 	_setup_stage(current_stage_index)
 	set_process(true)
+	call_deferred("_update_lane_guides")
 
 func _exit_tree() -> void:
+	Engine.time_scale = 1.0
 	if Localization.language_changed.is_connected(_on_language_changed):
 		Localization.language_changed.disconnect(_on_language_changed)
 
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_RESIZED and shell_root != null:
+		call_deferred("_apply_responsive_layout")
 func _process(delta: float) -> void:
 	if run_finished:
-		_refresh_sidebar_panels()
+		_refresh_status_panels()
 		return
 	if not battle_paused:
 		wave_director.update(delta, self)
 		for enemy in get_active_enemies():
-			enemy.tick(delta, LEAK_LINE_Y)
+			enemy.tick(delta, get_leak_line_y())
 		combat_resolver.process(delta, self)
 		if wave_director.is_wave_complete(self) and not current_wave_reward_processed:
 			current_wave_reward_processed = true
 			_on_wave_cleared()
-	_refresh_sidebar_panels()
+	_refresh_status_panels()
+
+func _build_layout() -> void:
+	var background := ColorRect.new()
+	background.anchor_right = 1.0
+	background.anchor_bottom = 1.0
+	background.color = Color("081018")
+	add_child(background)
+	shell_root = Control.new()
+	shell_root.size = BOARD_BASE_SIZE
+	add_child(shell_root)
+	board_backdrop = PanelContainer.new()
+	board_backdrop.position = Vector2.ZERO
+	board_backdrop.size = BOARD_BASE_SIZE
+	board_backdrop.add_theme_stylebox_override("panel", _make_surface_style(Color("0e1b26"), Color("b7d4e4"), 34))
+	shell_root.add_child(board_backdrop)
+	_build_top_row(shell_root)
+	_build_side_rails(shell_root)
+	_build_info_panels(shell_root)
+	_build_battlefield(shell_root)
+	_build_bottom(shell_root)
+	effect_layer = Control.new()
+	effect_layer.anchor_right = 1.0
+	effect_layer.anchor_bottom = 1.0
+	effect_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	shell_root.add_child(effect_layer)
+	_build_modal(shell_root)
+	board_backdrop.z_index = 0
+	battlefield_frame.z_index = 1
+	deploy_panel.z_index = 2
+	bottom_bar.z_index = 3
+	left_rail.z_index = 4
+	right_rail.z_index = 4
+	top_row.z_index = 4
+	stats_panel.z_index = 5
+	log_panel.z_index = 5
+	effect_layer.z_index = 6
+	overlay.z_index = 10
+	call_deferred("_apply_responsive_layout")
+
+func _build_top_row(shell: Control) -> void:
+	top_row = Control.new()
+	top_row.position = Vector2.ZERO
+	top_row.size = BOARD_BASE_SIZE
+	shell.add_child(top_row)
+
+	top_stage_stack = VBoxContainer.new()
+	top_stage_stack.position = Vector2(585, 42)
+	top_stage_stack.custom_minimum_size = Vector2(430, 116)
+	top_stage_stack.alignment = BoxContainer.ALIGNMENT_CENTER
+	top_stage_stack.add_theme_constant_override("separation", 12)
+	top_row.add_child(top_stage_stack)
+
+	var stage_card := PanelContainer.new()
+	stage_card.custom_minimum_size = Vector2(430, 76)
+	stage_card.add_theme_stylebox_override("panel", _make_surface_style(Color("152634"), Color("8fb6cc"), 999))
+	top_stage_stack.add_child(stage_card)
+	var stage_box := _make_panel_box(stage_card, 12)
+	stage_kicker_label = Label.new()
+	stage_kicker_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	stage_kicker_label.add_theme_font_size_override("font_size", 12)
+	stage_kicker_label.add_theme_color_override("font_color", Color("bfd5e4"))
+	stage_box.add_child(stage_kicker_label)
+	stage_label = Label.new()
+	stage_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	stage_label.add_theme_font_size_override("font_size", 30)
+	stage_box.add_child(stage_label)
+
+	var hud_row := HBoxContainer.new()
+	hud_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	hud_row.add_theme_constant_override("separation", 10)
+	top_stage_stack.add_child(hud_row)
+	wave_badge_label = _make_hud_pill(hud_row)
+	enemy_badge_label = _make_hud_pill(hud_row)
+	trait_badge_label = _make_hud_pill(hud_row)
+
+	top_utility_box = HBoxContainer.new()
+	top_utility_box.position = Vector2(1088, 44)
+	top_utility_box.custom_minimum_size = Vector2(450, 38)
+	top_utility_box.alignment = BoxContainer.ALIGNMENT_END
+	top_utility_box.add_theme_constant_override("separation", 8)
+	top_row.add_child(top_utility_box)
+	prev_button = _make_utility_button()
+	prev_button.pressed.connect(_change_stage.bind(-1))
+	top_utility_box.add_child(prev_button)
+	restart_button = _make_utility_button()
+	restart_button.pressed.connect(_restart_current_stage)
+	top_utility_box.add_child(restart_button)
+	next_button = _make_utility_button()
+	next_button.pressed.connect(_change_stage.bind(1))
+	top_utility_box.add_child(next_button)
+	language_title_label = Label.new()
+	language_title_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	top_utility_box.add_child(language_title_label)
+	language_option = OptionButton.new()
+	language_option.custom_minimum_size = Vector2(120, 36)
+	language_option.item_selected.connect(_on_language_selected)
+	top_utility_box.add_child(language_option)
+
+func _build_side_rails(shell: Control) -> void:
+	left_rail = VBoxContainer.new()
+	left_rail.position = Vector2(34, 160)
+	left_rail.custom_minimum_size = Vector2(82, 290)
+	left_rail.add_theme_constant_override("separation", 14)
+	shell.add_child(left_rail)
+	quick_speed_button = _make_quick_button("speed")
+	quick_speed_button.pressed.connect(_toggle_speed)
+	quick_speed_label = quick_speed_button.get_meta("title_label") as Label
+	left_rail.add_child(quick_speed_button)
+	quick_stats_button = _make_quick_button("stats")
+	quick_stats_button.pressed.connect(_toggle_stats_panel)
+	quick_stats_label = quick_stats_button.get_meta("title_label") as Label
+	left_rail.add_child(quick_stats_button)
+	quick_log_button = _make_quick_button("log")
+	quick_log_button.pressed.connect(_toggle_log_panel)
+	quick_log_label = quick_log_button.get_meta("title_label") as Label
+	left_rail.add_child(quick_log_button)
+
+	right_rail = VBoxContainer.new()
+	right_rail.position = Vector2(1352, 160)
+	right_rail.custom_minimum_size = Vector2(214, 244)
+	right_rail.alignment = BoxContainer.ALIGNMENT_END
+	right_rail.add_theme_constant_override("separation", 12)
+	shell.add_child(right_rail)
+
+	totem_card = PanelContainer.new()
+	totem_card.custom_minimum_size = Vector2(214, 182)
+	totem_card.size_flags_horizontal = Control.SIZE_SHRINK_END
+	totem_card.add_theme_stylebox_override("panel", _make_surface_style(Color("142636"), Color("9bc1d7"), 24))
+	right_rail.add_child(totem_card)
+	var totem_box := _make_panel_box(totem_card, 14)
+	var totem_icon_wrap := CenterContainer.new()
+	totem_icon_wrap.custom_minimum_size = Vector2(0, 80)
+	totem_box.add_child(totem_icon_wrap)
+	totem_icon = IconBadge.new()
+	totem_icon.custom_minimum_size = Vector2(68, 68)
+	totem_icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	totem_icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	totem_icon_wrap.add_child(totem_icon)
+	totem_name_label = Label.new()
+	totem_name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	totem_name_label.add_theme_font_size_override("font_size", 17)
+	totem_box.add_child(totem_name_label)
+	totem_charge_label = Label.new()
+	totem_charge_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	totem_charge_label.add_theme_color_override("font_color", Color("cfe2ef"))
+	totem_charge_label.add_theme_font_size_override("font_size", 11)
+	totem_box.add_child(totem_charge_label)
+	totem_desc_label = RichTextLabel.new()
+	totem_desc_label.fit_content = true
+	totem_desc_label.scroll_active = false
+	totem_desc_label.bbcode_enabled = false
+	totem_desc_label.add_theme_font_size_override("normal_font_size", 12)
+	totem_box.add_child(totem_desc_label)
+
+	threat_wrap = PanelContainer.new()
+	threat_wrap.custom_minimum_size = Vector2(82, 82)
+	threat_wrap.size_flags_horizontal = Control.SIZE_SHRINK_END
+	threat_wrap.add_theme_stylebox_override("panel", _make_surface_style(Color("732c22"), Color("ffcfbf"), 22))
+	right_rail.add_child(threat_wrap)
+	var threat_center := CenterContainer.new()
+	threat_center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	threat_wrap.add_child(threat_center)
+	threat_badge = IconBadge.new()
+	threat_badge.custom_minimum_size = Vector2(52, 52)
+	threat_badge.configure(Color("ff976f"), Color("a34334"), Color("fff1df"), "threat")
+	threat_center.add_child(threat_badge)
+
+func _build_info_panels(shell: Control) -> void:
+	stats_panel = _make_info_panel(Vector2(134, 182), Vector2(312, 288))
+	shell.add_child(stats_panel)
+	stats_panel.visible = false
+	var stats_box := _make_panel_box(stats_panel, 14)
+	var stats_title := Label.new()
+	stats_title.set_meta("copy_key", "run_intel")
+	stats_title.add_theme_font_size_override("font_size", 16)
+	stats_box.add_child(stats_title)
+	wave_status_label = Label.new()
+	wave_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	stats_box.add_child(wave_status_label)
+	var trait_title := Label.new()
+	trait_title.set_meta("copy_key", "traits")
+	stats_box.add_child(trait_title)
+	trait_label = RichTextLabel.new()
+	trait_label.fit_content = true
+	trait_label.bbcode_enabled = false
+	trait_label.scroll_active = true
+	trait_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	stats_box.add_child(trait_label)
+	var damage_title := Label.new()
+	damage_title.set_meta("copy_key", "damage")
+	stats_box.add_child(damage_title)
+	damage_label = RichTextLabel.new()
+	damage_label.fit_content = true
+	damage_label.bbcode_enabled = false
+	damage_label.scroll_active = true
+	damage_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	stats_box.add_child(damage_label)
+	log_panel = _make_info_panel(Vector2(134, 182), Vector2(312, 288))
+	shell.add_child(log_panel)
+	log_panel.visible = false
+	var log_box := _make_panel_box(log_panel, 14)
+	var log_title := Label.new()
+	log_title.set_meta("copy_key", "battle_log")
+	log_title.add_theme_font_size_override("font_size", 16)
+	log_box.add_child(log_title)
+	log_label = RichTextLabel.new()
+	log_label.fit_content = true
+	log_label.bbcode_enabled = false
+	log_label.scroll_active = true
+	log_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	log_box.add_child(log_label)
+func _build_battlefield(shell: Control) -> void:
+	battlefield_frame = PanelContainer.new()
+	battlefield_frame.position = Vector2(180, 150)
+	battlefield_frame.size = Vector2(1240, 430)
+	battlefield_frame.add_theme_stylebox_override("panel", _make_surface_style(Color(0.10, 0.15, 0.20, 0.18), Color(0.85, 0.93, 0.98, 0.22), 34))
+	shell.add_child(battlefield_frame)
+	var battlefield_canvas := Control.new()
+	battlefield_canvas.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	battlefield_frame.add_child(battlefield_canvas)
+	var arena_back := PanelContainer.new()
+	arena_back.position = Vector2(18, 18)
+	arena_back.size = Vector2(1204, 394)
+	arena_back.add_theme_stylebox_override("panel", _make_surface_style(Color("2a3f51"), Color(1, 1, 1, 0.06), 20))
+	battlefield_canvas.add_child(arena_back)
+	enemy_layer = Control.new()
+	enemy_layer.position = Vector2(102, 20)
+	enemy_layer.size = Vector2(1000, 348)
+	battlefield_canvas.add_child(enemy_layer)
+	for lane_index in range(LANE_COUNT):
+		var lane_panel := PanelContainer.new()
+		lane_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		lane_panel.add_theme_stylebox_override("panel", _make_surface_style(Color(1, 1, 1, 0.04), Color(1, 1, 1, 0.07), 28))
+		enemy_layer.add_child(lane_panel)
+		lane_guides.append(lane_panel)
+	leak_line = ColorRect.new()
+	leak_line.color = Color("f6bf67")
+	enemy_layer.add_child(leak_line)
+	_update_lane_guides()
+func _build_bottom(shell: Control) -> void:
+	deploy_panel = PanelContainer.new()
+	deploy_panel.position = Vector2(150, 592)
+	deploy_panel.size = Vector2(1300, 168)
+	deploy_panel.add_theme_stylebox_override("panel", _make_surface_style(Color("556575"), Color("d9ebf4"), 30))
+	shell.add_child(deploy_panel)
+	var deploy_box := _make_panel_box(deploy_panel, 16)
+	var deploy_head := HBoxContainer.new()
+	deploy_head.add_theme_constant_override("separation", 12)
+	deploy_box.add_child(deploy_head)
+	var deploy_meta := VBoxContainer.new()
+	deploy_meta.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	deploy_meta.add_theme_constant_override("separation", 4)
+	deploy_head.add_child(deploy_meta)
+	deploy_title_label = Label.new()
+	deploy_title_label.add_theme_font_size_override("font_size", 18)
+	deploy_meta.add_child(deploy_title_label)
+	random_hint_label = Label.new()
+	random_hint_label.add_theme_color_override("font_color", Color("d9e8f0"))
+	random_hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	random_hint_label.add_theme_font_size_override("font_size", 12)
+	deploy_meta.add_child(random_hint_label)
+	deploy_hint_label = Label.new()
+	deploy_hint_label.add_theme_color_override("font_color", Color("edf6fb"))
+	deploy_hint_label.add_theme_font_size_override("font_size", 13)
+	deploy_head.add_child(deploy_hint_label)
+	board_grid = GridContainer.new()
+	board_grid.columns = 10
+	board_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	board_grid.add_theme_constant_override("h_separation", 10)
+	board_grid.add_theme_constant_override("v_separation", 10)
+	deploy_box.add_child(board_grid)
+	board_manager.setup(board_grid, self)
+
+	bottom_bar = HBoxContainer.new()
+	bottom_bar.position = Vector2(150, 784)
+	bottom_bar.size = Vector2(1300, 82)
+	bottom_bar.add_theme_constant_override("separation", 12)
+	shell.add_child(bottom_bar)
+	money_panel = PanelContainer.new()
+	money_panel.custom_minimum_size = Vector2(205, 82)
+	money_panel.add_theme_stylebox_override("panel", _make_surface_style(Color("efe3d1"), Color("fff8ef"), 20))
+	bottom_bar.add_child(money_panel)
+	var money_box := _make_panel_box(money_panel, 14)
+	var money_caption := Label.new()
+	money_caption.set_meta("copy_key", "gold_label")
+	money_caption.add_theme_color_override("font_color", Color("687a86"))
+	money_caption.add_theme_font_size_override("font_size", 11)
+	money_box.add_child(money_caption)
+	gold_value_label = Label.new()
+	gold_value_label.add_theme_font_size_override("font_size", 30)
+	gold_value_label.add_theme_color_override("font_color", Color("1c3749"))
+	money_box.add_child(gold_value_label)
+	summon_cost_label = Label.new()
+	summon_cost_label.add_theme_color_override("font_color", Color("6f8190"))
+	summon_cost_label.add_theme_font_size_override("font_size", 13)
+	money_box.add_child(summon_cost_label)
+
+	core_panel = PanelContainer.new()
+	core_panel.custom_minimum_size = Vector2(693, 82)
+	core_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	core_panel.add_theme_stylebox_override("panel", _make_surface_style(Color("152534"), Color("9bc4db"), 20))
+	bottom_bar.add_child(core_panel)
+	var core_box := _make_panel_box(core_panel, 14)
+	core_meta_label = Label.new()
+	core_meta_label.add_theme_font_size_override("font_size", 14)
+	core_box.add_child(core_meta_label)
+	core_value_label = Label.new()
+	core_value_label.add_theme_font_size_override("font_size", 22)
+	core_box.add_child(core_value_label)
+	var core_bar_frame := PanelContainer.new()
+	core_bar_frame.custom_minimum_size = Vector2(0, 18)
+	core_bar_frame.add_theme_stylebox_override("panel", _make_surface_style(Color(1, 1, 1, 0.10), Color(1, 1, 1, 0.06), 999))
+	core_box.add_child(core_bar_frame)
+	var core_fill_root := Control.new()
+	core_fill_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	core_bar_frame.add_child(core_fill_root)
+	core_fill = ColorRect.new()
+	core_fill.anchor_right = 1.0
+	core_fill.anchor_bottom = 1.0
+	core_fill.color = Color("79e16f")
+	core_fill_root.add_child(core_fill)
+
+	actions_panel = PanelContainer.new()
+	actions_panel.custom_minimum_size = Vector2(390, 82)
+	actions_panel.size_flags_horizontal = Control.SIZE_SHRINK_END
+	actions_panel.add_theme_stylebox_override("panel", _make_surface_style(Color("152534"), Color("9bc4db"), 20))
+	bottom_bar.add_child(actions_panel)
+	var actions_box := HBoxContainer.new()
+	actions_box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	actions_box.offset_left = 10
+	actions_box.offset_top = 10
+	actions_box.offset_right = -10
+	actions_box.offset_bottom = -10
+	actions_box.add_theme_constant_override("separation", 10)
+	actions_panel.add_child(actions_box)
+	totem_button = Button.new()
+	totem_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	totem_button.pressed.connect(_on_totem_upgrade_pressed)
+	totem_button_cost_label = _build_action_button(totem_button, "totem", Color("5cc3ac"), Color("2b7773"))
+	actions_box.add_child(totem_button)
+	summon_button = Button.new()
+	summon_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	summon_button.pressed.connect(_on_summon_pressed)
+	summon_button_cost_label = _build_action_button(summon_button, "summon", Color("f1b55d"), Color("bc6526"))
+	actions_box.add_child(summon_button)
+
+func _build_modal(shell: Control) -> void:
+	overlay = ColorRect.new()
+	overlay.anchor_right = 1.0
+	overlay.anchor_bottom = 1.0
+	overlay.color = Color(0, 0, 0, 0.58)
+	overlay.visible = false
+	shell.add_child(overlay)
+	var modal_center := CenterContainer.new()
+	modal_center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	overlay.add_child(modal_center)
+	var modal_panel := PanelContainer.new()
+	modal_panel.custom_minimum_size = Vector2(930, 468)
+	modal_panel.add_theme_stylebox_override("panel", _make_surface_style(Color("f2eee2"), Color("ffffff"), 34))
+	modal_center.add_child(modal_panel)
+	var modal_box := _make_panel_box(modal_panel, 24)
+	modal_title = Label.new()
+	modal_title.add_theme_color_override("font_color", Color("274152"))
+	modal_title.add_theme_font_size_override("font_size", 30)
+	modal_box.add_child(modal_title)
+	modal_subtitle = RichTextLabel.new()
+	modal_subtitle.fit_content = true
+	modal_subtitle.bbcode_enabled = false
+	modal_subtitle.scroll_active = false
+	modal_subtitle.add_theme_color_override("default_color", Color("597080"))
+	modal_box.add_child(modal_subtitle)
+	modal_options_box = GridContainer.new()
+	modal_options_box.columns = 3
+	modal_options_box.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	modal_options_box.add_theme_constant_override("h_separation", 16)
+	modal_options_box.add_theme_constant_override("v_separation", 16)
+	modal_box.add_child(modal_options_box)
+	modal_reroll_button = Button.new()
+	modal_reroll_button.custom_minimum_size = Vector2(0, 46)
+	modal_reroll_button.add_theme_stylebox_override("normal", _make_button_style(Color("58778f"), Color("6f8ca5"), 18))
+	modal_reroll_button.add_theme_stylebox_override("hover", _make_button_style(Color("6a89a0"), Color("7e9bb3"), 18))
+	modal_reroll_button.add_theme_color_override("font_color", Color("f6fbff"))
+	modal_reroll_button.visible = false
+	modal_reroll_button.pressed.connect(_on_modal_reroll_pressed)
+	modal_box.add_child(modal_reroll_button)
+
+func _apply_responsive_layout() -> void:
+	if shell_root == null:
+		return
+	var scale_factor := minf(size.x / BOARD_BASE_SIZE.x, size.y / BOARD_BASE_SIZE.y)
+	scale_factor = maxf(scale_factor, 0.6)
+	var scaled_board_size := BOARD_BASE_SIZE * scale_factor
+	shell_root.position = (size - scaled_board_size) * 0.5
+	shell_root.size = BOARD_BASE_SIZE
+	shell_root.scale = Vector2.ONE * scale_factor
+	board_backdrop.position = Vector2.ZERO
+	board_backdrop.size = BOARD_BASE_SIZE
+	stats_panel.position = Vector2(104, 204)
+	stats_panel.size = Vector2(302, 286)
+	log_panel.position = Vector2(104, 204)
+	log_panel.size = Vector2(302, 286)
+	battlefield_frame.position = Vector2(180, 150)
+	battlefield_frame.size = Vector2(1240, 430)
+	deploy_panel.position = Vector2(150, 598)
+	deploy_panel.size = Vector2(1300, 174)
+	bottom_bar.position = Vector2(150, 794)
+	bottom_bar.size = Vector2(1300, 88)
+	effect_layer.position = Vector2.ZERO
+	effect_layer.size = BOARD_BASE_SIZE
+	_update_lane_guides()
 
 func _apply_localization() -> void:
-	controls_title_label.text = Localization.text("controls")
-	preview_title_label.text = Localization.text("summon_preview")
-	log_title_label.text = Localization.text("battle_log")
-	run_info_title_label.text = Localization.text("run_info")
-	traits_title_label.text = Localization.text("traits")
-	damage_title_label.text = Localization.text("damage")
-	summon_button.text = Localization.text("summon_hero")
-	refresh_button.text = Localization.text("refresh_preview")
+	stage_kicker_label.text = Localization.text("stage_overview")
 	prev_button.text = Localization.text("prev_stage")
 	restart_button.text = Localization.text("restart_stage")
 	next_button.text = Localization.text("next_stage")
 	language_title_label.text = Localization.text("language")
-	core_title_label.text = Localization.text("core")
-	board_title_label.text = Localization.text("board")
-	modal_reroll_button.text = Localization.text("reroll")
+	language_option.clear()
+	language_option.add_item(Localization.text("language_zh"))
+	language_option.set_item_metadata(0, Localization.LANGUAGE_ZH)
+	language_option.add_item(Localization.text("language_en"))
+	language_option.set_item_metadata(1, Localization.LANGUAGE_EN)
 	_sync_language_option()
+	deploy_title_label.text = Localization.text("deploy_strip")
+	deploy_hint_label.text = Localization.text("deploy_hint")
+	quick_stats_label.text = Localization.text("quick_stats")
+	quick_log_label.text = Localization.text("quick_log")
+	_update_speed_button()
+	var totem_title := totem_button.get_meta("title_label") as Label
+	if totem_title != null:
+		totem_title.text = Localization.text("totem_upgrade")
+	var totem_caption := totem_button.get_meta("caption_label") as Label
+	if totem_caption != null:
+		totem_caption.text = Localization.text("action_ready")
+	var summon_title := summon_button.get_meta("title_label") as Label
+	if summon_title != null:
+		summon_title.text = Localization.text("summon_hero")
+	var summon_caption := summon_button.get_meta("caption_label") as Label
+	if summon_caption != null:
+		summon_caption.text = Localization.text("action_ready")
+	for panel in [stats_panel, log_panel]:
+		for child in panel.find_children("*", "Label"):
+			if child.has_meta("copy_key"):
+				child.text = Localization.text(str(child.get_meta("copy_key")))
+	modal_reroll_button.text = Localization.text("reroll")
 	if run_state != null and current_stage != null:
-		_refresh_summon_preview()
-		_refresh_sidebar_panels()
-
+		_refresh_random_hint()
+		_refresh_status_panels()
 func _sync_language_option() -> void:
-	if language_option == null:
-		return
 	for index in range(language_option.get_item_count()):
 		var code: String = str(language_option.get_item_metadata(index))
 		if code == Localization.current_language:
@@ -143,199 +611,7 @@ func _on_language_changed(_language_code: String) -> void:
 	_setup_stage(current_stage_index)
 	add_log(Localization.text("language_changed"))
 	_apply_localization()
-	_refresh_sidebar_panels()
-
-func _build_layout() -> void:
-	var background := ColorRect.new()
-	background.anchor_right = 1.0
-	background.anchor_bottom = 1.0
-	background.color = Color("0d1624")
-	add_child(background)
-
-	var root := HBoxContainer.new()
-	root.anchor_right = 1.0
-	root.anchor_bottom = 1.0
-	root.offset_left = 16
-	root.offset_top = 16
-	root.offset_right = -16
-	root.offset_bottom = -16
-	root.add_theme_constant_override("separation", 16)
-	add_child(root)
-
-	var left_panel := _make_card_panel(Vector2(280, 0))
-	root.add_child(left_panel)
-	var left_box := _make_full_box(left_panel)
-	controls_title_label = _make_section_title("")
-	left_box.add_child(controls_title_label)
-	gold_label = Label.new()
-	hp_label = Label.new()
-	left_box.add_child(gold_label)
-	left_box.add_child(hp_label)
-	summon_button = Button.new()
-	summon_button.text = ""
-	summon_button.pressed.connect(_on_summon_pressed)
-	left_box.add_child(summon_button)
-	refresh_button = Button.new()
-	refresh_button.text = ""
-	refresh_button.pressed.connect(_on_refresh_pressed)
-	left_box.add_child(refresh_button)
-	preview_title_label = _make_section_title("")
-	left_box.add_child(preview_title_label)
-	preview_box = VBoxContainer.new()
-	preview_box.add_theme_constant_override("separation", 6)
-	left_box.add_child(preview_box)
-	log_title_label = _make_section_title("")
-	left_box.add_child(log_title_label)
-	log_label = RichTextLabel.new()
-	log_label.fit_content = true
-	log_label.scroll_active = true
-	log_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	left_box.add_child(log_label)
-
-	var center_panel := _make_card_panel(Vector2(0, 0))
-	center_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	root.add_child(center_panel)
-	var center_box := _make_full_box(center_panel)
-	var top_bar := HBoxContainer.new()
-	top_bar.add_theme_constant_override("separation", 10)
-	center_box.add_child(top_bar)
-	prev_button = Button.new()
-	prev_button.text = ""
-	prev_button.pressed.connect(_change_stage.bind(-1))
-	top_bar.add_child(prev_button)
-	stage_label = Label.new()
-	stage_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	stage_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	top_bar.add_child(stage_label)
-	restart_button = Button.new()
-	restart_button.text = ""
-	restart_button.pressed.connect(_restart_current_stage)
-	top_bar.add_child(restart_button)
-	next_button = Button.new()
-	next_button.text = ""
-	next_button.pressed.connect(_change_stage.bind(1))
-	top_bar.add_child(next_button)
-	language_title_label = Label.new()
-	top_bar.add_child(language_title_label)
-	language_option = OptionButton.new()
-	language_option.add_item("简体中文")
-	language_option.set_item_metadata(0, Localization.LANGUAGE_ZH)
-	language_option.add_item("English")
-	language_option.set_item_metadata(1, Localization.LANGUAGE_EN)
-	language_option.item_selected.connect(_on_language_selected)
-	top_bar.add_child(language_option)
-
-	var battle_frame := PanelContainer.new()
-	battle_frame.custom_minimum_size = Vector2(720, 830)
-	battle_frame.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	center_box.add_child(battle_frame)
-	var frame_style := StyleBoxFlat.new()
-	frame_style.bg_color = Color("13263d")
-	frame_style.corner_radius_top_left = 14
-	frame_style.corner_radius_top_right = 14
-	frame_style.corner_radius_bottom_left = 14
-	frame_style.corner_radius_bottom_right = 14
-	battle_frame.add_theme_stylebox_override("panel", frame_style)
-
-	var battle_canvas := Control.new()
-	battle_canvas.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	battle_canvas.custom_minimum_size = Vector2(720, 830)
-	battle_frame.add_child(battle_canvas)
-	var lane_bg := ColorRect.new()
-	lane_bg.position = Vector2(40, 38)
-	lane_bg.size = LANE_SIZE
-	lane_bg.color = Color("17324f")
-	battle_canvas.add_child(lane_bg)
-	var lane_path := ColorRect.new()
-	lane_path.position = Vector2(300, 38)
-	lane_path.size = Vector2(120, LANE_SIZE.y)
-	lane_path.color = Color("264d73")
-	battle_canvas.add_child(lane_path)
-	enemy_layer = Control.new()
-	enemy_layer.position = lane_bg.position
-	enemy_layer.custom_minimum_size = LANE_SIZE
-	enemy_layer.size = LANE_SIZE
-	battle_canvas.add_child(enemy_layer)
-	var leak_line := ColorRect.new()
-	leak_line.position = lane_bg.position + Vector2(0, LEAK_LINE_Y)
-	leak_line.size = Vector2(LANE_SIZE.x, 3)
-	leak_line.color = Color("ef476f")
-	battle_canvas.add_child(leak_line)
-	core_title_label = Label.new()
-	core_title_label.text = ""
-	core_title_label.position = lane_bg.position + Vector2(290, LEAK_LINE_Y + 8)
-	battle_canvas.add_child(core_title_label)
-	board_title_label = Label.new()
-	board_title_label.text = ""
-	board_title_label.position = Vector2(320, 572)
-	battle_canvas.add_child(board_title_label)
-	board_grid = GridContainer.new()
-	board_grid.columns = 5
-	board_grid.position = Vector2(54, 606)
-	board_grid.custom_minimum_size = Vector2(612, 180)
-	board_grid.add_theme_constant_override("h_separation", 8)
-	board_grid.add_theme_constant_override("v_separation", 8)
-	battle_canvas.add_child(board_grid)
-	board_manager.setup(board_grid, self)
-
-	var right_panel := _make_card_panel(Vector2(310, 0))
-	root.add_child(right_panel)
-	var right_box := _make_full_box(right_panel)
-	run_info_title_label = _make_section_title("")
-	right_box.add_child(run_info_title_label)
-	wave_label = Label.new()
-	right_box.add_child(wave_label)
-	totem_label = RichTextLabel.new()
-	totem_label.fit_content = true
-	right_box.add_child(totem_label)
-	traits_title_label = _make_section_title("")
-	right_box.add_child(traits_title_label)
-	trait_label = RichTextLabel.new()
-	trait_label.fit_content = true
-	trait_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	right_box.add_child(trait_label)
-	damage_title_label = _make_section_title("")
-	right_box.add_child(damage_title_label)
-	damage_label = RichTextLabel.new()
-	damage_label.fit_content = true
-	damage_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	right_box.add_child(damage_label)
-
-	overlay = ColorRect.new()
-	overlay.anchor_right = 1.0
-	overlay.anchor_bottom = 1.0
-	overlay.color = Color(0, 0, 0, 0.62)
-	overlay.visible = false
-	add_child(overlay)
-	var modal_panel := PanelContainer.new()
-	modal_panel.custom_minimum_size = Vector2(680, 420)
-	modal_panel.position = Vector2(460, 190)
-	overlay.add_child(modal_panel)
-	var modal_style := StyleBoxFlat.new()
-	modal_style.bg_color = Color("102338")
-	modal_style.corner_radius_top_left = 16
-	modal_style.corner_radius_top_right = 16
-	modal_style.corner_radius_bottom_left = 16
-	modal_style.corner_radius_bottom_right = 16
-	modal_panel.add_theme_stylebox_override("panel", modal_style)
-	var modal_box := _make_full_box(modal_panel)
-	modal_title = Label.new()
-	modal_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	modal_title.add_theme_font_size_override("font_size", 24)
-	modal_box.add_child(modal_title)
-	modal_subtitle = RichTextLabel.new()
-	modal_subtitle.fit_content = true
-	modal_subtitle.bbcode_enabled = true
-	modal_box.add_child(modal_subtitle)
-	modal_options_box = VBoxContainer.new()
-	modal_options_box.add_theme_constant_override("separation", 10)
-	modal_options_box.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	modal_box.add_child(modal_options_box)
-	modal_reroll_button = Button.new()
-	modal_reroll_button.text = ""
-	modal_reroll_button.visible = false
-	modal_reroll_button.pressed.connect(_on_modal_reroll_pressed)
-	modal_box.add_child(modal_reroll_button)
+	_refresh_status_panels()
 
 func _setup_stage(index: int) -> void:
 	current_stage_index = clampi(index, 0, max(0, stages.size() - 1))
@@ -346,21 +622,26 @@ func _setup_stage(index: int) -> void:
 	wave_director.setup(current_stage)
 	board_manager.clear_board()
 	for enemy in get_active_enemies():
-		enemy_layer.remove_child(enemy)
+		if enemy.get_parent() != null:
+			enemy.get_parent().remove_child(enemy)
 		enemy.queue_free()
+	for node in effect_layer.get_children():
+		node.queue_free()
 	boss_spawned = false
 	bonus_elite_spawned = false
 	wave_bombard_applied = false
 	battle_paused = true
 	run_finished = false
 	current_wave_reward_processed = false
-	run_state.gold = 35
-	run_state.base_hp = 10
-	run_state.max_base_hp = 10
+	run_state.gold = 40
+	run_state.base_hp = 24
+	run_state.max_base_hp = 24
 	run_state.rerolls = 1
-	summon_preview_ids.clear()
+	random_hint_ids.clear()
 	log_lines.clear()
-	_refresh_summon_preview()
+	stats_panel.visible = false
+	log_panel.visible = false
+	_refresh_random_hint()
 	add_log(Localization.format_text("entered_stage", [current_stage.display_name, run_state.seed]))
 	_show_totem_selection()
 
@@ -377,9 +658,7 @@ func _on_summon_pressed() -> void:
 	if cost < 0:
 		add_log(Localization.text("not_enough_gold"))
 		return
-	if summon_preview_ids.is_empty():
-		_refresh_summon_preview()
-	var hero_id := summon_preview_ids[run_state.rng.randi_range(0, summon_preview_ids.size() - 1)]
+	var hero_id := _pick_weighted_hero([])
 	var piece = board_manager.spawn_hero(hero_id, cost)
 	if piece == null:
 		if cost > 0:
@@ -387,29 +666,28 @@ func _on_summon_pressed() -> void:
 		add_log(Localization.text("no_free_slot"))
 		return
 	add_log(Localization.format_text("summoned", [piece.get_display_label()]))
-	_refresh_summon_preview()
+	_refresh_random_hint()
 
-func _on_refresh_pressed() -> void:
-	if not economy_system.pay_for_refresh(run_state):
-		add_log(Localization.text("cannot_refresh"))
+func _on_totem_upgrade_pressed() -> void:
+	if run_state.totem_id == "":
+		add_log(Localization.text("totem_upgrade_locked"))
 		return
-	_refresh_summon_preview()
-	add_log(Localization.text("preview_refreshed"))
+	var cost := _get_totem_upgrade_cost()
+	if not run_state.spend_gold(cost):
+		add_log(Localization.text("not_enough_gold"))
+		return
+	run_state.totem_level += 1
+	add_log(Localization.format_text("totem_upgraded", [run_state.totem_level]))
 
-func _refresh_summon_preview() -> void:
-	summon_preview_ids.clear()
+func _refresh_random_hint() -> void:
+	if run_state == null:
+		return
+	random_hint_ids.clear()
 	var selected: Array[String] = []
-	while summon_preview_ids.size() < 3:
+	while random_hint_ids.size() < 3:
 		var hero_id := _pick_weighted_hero(selected)
-		summon_preview_ids.append(hero_id)
+		random_hint_ids.append(hero_id)
 		selected.append(hero_id)
-	for child in preview_box.get_children():
-		child.queue_free()
-	for hero_id in summon_preview_ids:
-		var hero_def: HeroDef = GameData.heroes[hero_id]
-		var card := Label.new()
-		card.text = "%s | %s" % [hero_def.display_name, Localization.role_name(hero_def.role)]
-		preview_box.add_child(card)
 
 func _pick_weighted_hero(excluded: Array[String]) -> String:
 	var total_weight := 0
@@ -428,17 +706,21 @@ func _pick_weighted_hero(excluded: Array[String]) -> String:
 	return GameData.heroes.keys()[0]
 
 func spawn_enemy(enemy_id: String, force_boss: bool = false) -> void:
-	var enemy_def: EnemyDef = GameData.enemies[enemy_id]
-	var hp_scale := 1.0 + current_stage.difficulty * 0.12 + maxf(0.0, float(run_state.current_wave_index)) * 0.08
+	var enemy_def = GameData.enemies[enemy_id]
+	var hp_scale: float = 1.0 + current_stage.difficulty * 0.10 + maxf(0.0, float(run_state.current_wave_index)) * 0.06
 	if enemy_def.is_boss or force_boss:
 		hp_scale *= 1.55
-	var speed_scale := 1.0 + current_stage.chapter * 0.03
-	var reward_bonus := 0
+	var speed_scale: float = 1.0 + current_stage.chapter * 0.015
+	var reward_bonus: int = 0
 	if enemy_def.tags.has("elite") or enemy_def.tags.has("boss"):
 		reward_bonus += int(wave_director.modifiers.get("bonus_elite_reward", 0))
 	var enemy := EnemyActor.new()
 	enemy.setup(enemy_def, hp_scale, speed_scale, reward_bonus)
-	enemy.position = Vector2((LANE_SIZE.x * 0.5) + run_state.rng.randf_range(-120.0, 120.0), -30.0)
+	var lane_width: float = enemy_layer.size.x / float(LANE_COUNT) if enemy_layer.size.x > 0.0 else 260.0
+	var lane_index := run_state.rng.randi_range(0, LANE_COUNT - 1)
+	var lane_center: float = lane_width * (lane_index + 0.5)
+	var jitter: float = minf(lane_width * 0.16, 26.0)
+	enemy.position = Vector2(lane_center + run_state.rng.randf_range(-jitter, jitter) - (enemy.custom_minimum_size.x * 0.5), -40.0)
 	enemy.defeated.connect(_on_enemy_defeated)
 	enemy.leaked.connect(_on_enemy_leaked)
 	enemy_layer.add_child(enemy)
@@ -460,6 +742,9 @@ func get_active_enemies() -> Array[EnemyActor]:
 func get_active_enemy_count() -> int:
 	return get_active_enemies().size()
 
+func get_leak_line_y() -> float:
+	return leak_line.position.y
+
 func _on_enemy_defeated(enemy: EnemyActor) -> void:
 	if not is_instance_valid(enemy):
 		return
@@ -475,7 +760,7 @@ func _on_enemy_defeated(enemy: EnemyActor) -> void:
 func _on_enemy_leaked(enemy: EnemyActor) -> void:
 	if not is_instance_valid(enemy):
 		return
-	var damage := enemy.enemy_def.contact_damage
+	var damage: int = maxi(1, enemy.enemy_def.contact_damage - 1)
 	if board_manager.get_piece_count_for_role("vanguard") >= 2:
 		damage = maxi(1, damage - 1)
 	run_state.lose_base_hp(damage)
@@ -488,8 +773,8 @@ func _on_enemy_leaked(enemy: EnemyActor) -> void:
 
 func _on_wave_cleared() -> void:
 	battle_paused = true
-	var wave := current_stage.wave_defs[run_state.current_wave_index]
-	var reward := wave.reward + int(_get_numeric_modifier("wave_bonus_gold"))
+	var wave = current_stage.wave_defs[run_state.current_wave_index]
+	var reward: int = wave.reward + int(_get_numeric_modifier("wave_bonus_gold"))
 	run_state.add_gold(reward)
 	add_log(Localization.format_text("wave_clear", [wave.label]))
 	if run_state.current_wave_index >= current_stage.wave_defs.size() - 1:
@@ -541,11 +826,11 @@ func _show_evolution_draft(hero_id: String, star_level: int) -> void:
 	var modal_entries: Array = []
 	for trait_def in choices:
 		modal_entries.append({"title": trait_def.display_name, "description": trait_def.description, "payload": trait_def})
-	var hero_def: HeroDef = GameData.heroes[hero_id]
+	var hero_def = GameData.heroes[hero_id]
 	_open_modal(Localization.text("evolution_trait"), Localization.format_text("evolution_reached", [hero_def.display_name, star_level]), modal_entries, "evolution_trait", {"hero_id": hero_id, "star_level": star_level}, true)
 
 func _show_event() -> void:
-	var event_def := event_director.pick_event(run_state)
+	var event_def = event_director.pick_event(run_state)
 	var modal_entries: Array = []
 	for option in event_def.options:
 		modal_entries.append({"title": option.get("label", Localization.text("option_default")), "description": option.get("description", ""), "payload": option})
@@ -562,13 +847,9 @@ func _open_modal(title: String, subtitle: String, choices: Array, mode: String, 
 	modal_subtitle.append_text(subtitle)
 	for child in modal_options_box.get_children():
 		child.queue_free()
+	modal_options_box.columns = mini(3, max(1, modal_choices.size()))
 	for index in range(modal_choices.size()):
-		var entry = modal_choices[index]
-		var button := Button.new()
-		button.custom_minimum_size = Vector2(0, 72)
-		button.text = "%s\n%s" % [entry["title"], entry["description"]]
-		button.pressed.connect(_on_modal_option_pressed.bind(index))
-		modal_options_box.add_child(button)
+		modal_options_box.add_child(_make_modal_choice_card(index, modal_choices[index]))
 	modal_reroll_button.visible = allow_reroll and run_state.rerolls > 0
 
 func _close_modal() -> void:
@@ -588,13 +869,13 @@ func _on_modal_option_pressed(index: int) -> void:
 			else:
 				_setup_stage(current_stage_index)
 		"totem":
-			var totem: TotemDef = entry["payload"]
+			var totem = entry["payload"]
 			run_state.totem_id = totem.id
 			add_log(Localization.format_text("totem_selected", [totem.display_name]))
 			_close_modal()
 			_start_wave(0)
 		"global_trait":
-			var trait_def: TraitDef = entry["payload"]
+			var trait_def = entry["payload"]
 			run_state.add_global_trait(trait_def)
 			_apply_immediate_trait_effects(trait_def)
 			add_log(Localization.format_text("trait_selected", [trait_def.display_name]))
@@ -605,7 +886,7 @@ func _on_modal_option_pressed(index: int) -> void:
 			else:
 				_start_wave(run_state.current_wave_index + 1)
 		"evolution_trait":
-			var evo_trait: TraitDef = entry["payload"]
+			var evo_trait = entry["payload"]
 			var hero_id: String = str(modal_context.get("hero_id", ""))
 			var star_level: int = int(modal_context.get("star_level", 3))
 			run_state.add_evolution_trait(hero_id, star_level, evo_trait)
@@ -628,7 +909,7 @@ func _on_modal_reroll_pressed() -> void:
 		"evolution_trait":
 			_show_evolution_draft(str(modal_context.get("hero_id", "")), int(modal_context.get("star_level", 3)))
 
-func _apply_immediate_trait_effects(trait_def: TraitDef) -> void:
+func _apply_immediate_trait_effects(trait_def) -> void:
 	if trait_def.modifiers.has("starting_gold"):
 		run_state.add_gold(int(trait_def.modifiers["starting_gold"]))
 	if trait_def.modifiers.has("core_hp"):
@@ -796,22 +1077,40 @@ func _get_numeric_modifier(key: String) -> float:
 		total += float(trait_def.modifiers.get(key, 0.0))
 	return total
 
-func _refresh_sidebar_panels() -> void:
+func _refresh_status_panels() -> void:
+	if run_state == null or current_stage == null:
+		return
 	stage_label.text = Localization.format_text("stage_seed", [current_stage.display_name, run_state.seed])
-	gold_label.text = Localization.format_text("gold_line", [run_state.gold, economy_system.current_cost(run_state)])
-	hp_label.text = Localization.format_text("hp_line", [run_state.base_hp, run_state.max_base_hp, run_state.rerolls])
-	wave_label.text = Localization.format_text("wave_line", [maxi(0, run_state.current_wave_index + 1), current_stage.wave_defs.size(), get_active_enemy_count()])
-	_refresh_rich_text_panels()
+	wave_badge_label.text = Localization.format_text("wave_badge", [maxi(0, run_state.current_wave_index + 1), current_stage.wave_defs.size()])
+	enemy_badge_label.text = Localization.format_text("enemy_badge", [get_active_enemy_count()])
+	trait_badge_label.text = Localization.format_text("trait_badge", [_get_active_trait_count()])
+	gold_value_label.text = str(run_state.gold)
+	summon_cost_label.text = Localization.format_text("summon_cost", [economy_system.current_cost(run_state)])
+	core_meta_label.text = Localization.format_text("core_status", [run_state.totem_level, _get_totem_upgrade_cost()])
+	core_value_label.text = "%d / %d" % [run_state.base_hp, run_state.max_base_hp]
+	core_fill.anchor_right = clampf(float(run_state.base_hp) / maxf(1.0, float(run_state.max_base_hp)), 0.0, 1.0)
+	random_hint_label.text = Localization.format_text("random_hero_hint", [_format_random_hint()])
+	wave_status_label.text = Localization.format_text("wave_line", [maxi(0, run_state.current_wave_index + 1), current_stage.wave_defs.size(), get_active_enemy_count()])
+	totem_button_cost_label.text = str(_get_totem_upgrade_cost())
+	summon_button_cost_label.text = str(economy_system.current_cost(run_state))
+	_refresh_rich_panels()
 	summon_button.disabled = battle_paused or run_finished
-	refresh_button.disabled = run_finished
+	totem_button.disabled = run_finished or run_state.totem_id == ""
 
-func _refresh_rich_text_panels() -> void:
-	totem_label.clear()
-	var totem: TotemDef = GameData.totems.get(run_state.totem_id) as TotemDef
+func _refresh_rich_panels() -> void:
+	var totem = GameData.totems.get(run_state.totem_id)
 	if totem != null:
-		totem_label.append_text(Localization.format_text("totem_info", [totem.display_name, run_state.totem_level, totem.description]))
+		totem_name_label.text = totem.display_name
+		totem_desc_label.clear()
+		totem_desc_label.append_text(totem.description)
+		totem_charge_label.text = _describe_totem_charge(totem)
+		_apply_palette(totem_icon, Color(totem.color), "totem")
 	else:
-		totem_label.append_text(Localization.text("totem_none"))
+		totem_name_label.text = Localization.text("totem_none")
+		totem_desc_label.clear()
+		totem_desc_label.append_text(Localization.text("totem_none_desc"))
+		totem_charge_label.text = Localization.text("totem_none_charge")
+		totem_icon.configure(Color("75d6ff"), Color("2c78af"), Color("f4fbff"), "totem")
 	trait_label.clear()
 	if run_state.active_global_traits.is_empty() and run_state.active_evolution_traits.is_empty():
 		trait_label.append_text(Localization.text("no_traits_yet"))
@@ -820,7 +1119,7 @@ func _refresh_rich_text_panels() -> void:
 			trait_label.append_text("- %s\n" % trait_def.display_name)
 		for hero_id in run_state.active_evolution_traits.keys():
 			for trait_def in run_state.active_evolution_traits[hero_id]:
-				trait_label.append_text("- %s - %s\n" % [GameData.heroes[hero_id].display_name, trait_def.display_name])
+				trait_label.append_text("- %s / %s\n" % [GameData.heroes[hero_id].display_name, trait_def.display_name])
 	damage_label.clear()
 	if run_state.damage_stats.is_empty():
 		damage_label.append_text(Localization.text("no_damage_stats_yet"))
@@ -832,12 +1131,15 @@ func _refresh_rich_text_panels() -> void:
 		for entry in entries:
 			damage_label.append_text("%s: %d\n" % [entry["name"], int(round(entry["value"]))])
 	log_label.clear()
-	for line in log_lines:
-		log_label.append_text("%s\n" % line)
+	if log_lines.is_empty():
+		log_label.append_text(Localization.text("no_logs_yet"))
+	else:
+		for line in log_lines:
+			log_label.append_text("%s\n" % line)
 
 func add_log(text: String) -> void:
 	log_lines.append(text)
-	if log_lines.size() > 12:
+	if log_lines.size() > MAX_LOG_LINES:
 		log_lines.pop_front()
 
 func _change_stage(offset: int) -> void:
@@ -846,31 +1148,352 @@ func _change_stage(offset: int) -> void:
 func _restart_current_stage() -> void:
 	_setup_stage(current_stage_index)
 
-func _make_card_panel(min_size: Vector2) -> PanelContainer:
-	var panel := PanelContainer.new()
-	panel.custom_minimum_size = min_size
+func show_hit_feedback(piece, enemy, dealt: float, meta: Dictionary) -> void:
+	if piece == null or enemy == null:
+		return
+	var start := _to_effect_local(piece.get_global_rect().get_center())
+	var finish := _to_effect_local(enemy.get_global_rect().get_center())
+	var color: Color = piece.hero_def.color.lightened(0.18) if piece.hero_def != null else Color("89d8ff")
+	_spawn_beam(start, finish, color)
+	if str(meta.get("mode", "single")) == "splash":
+		_spawn_burst(finish, color)
+	else:
+		_spawn_burst(finish, color.lightened(0.18), 20.0)
+	if bool(meta.get("freeze", false)):
+		_spawn_ring(finish, Color("82d8ff"))
+	elif bool(meta.get("poison", false)):
+		_spawn_ring(finish, Color("89dc9a"), 54.0)
+	if bool(meta.get("crit", false)):
+		_spawn_spark(finish, Color("ffdc7a"))
+	_spawn_damage_number(finish, dealt, bool(meta.get("crit", false)))
+
+func _toggle_speed() -> void:
+	battle_speed = 1.5 if is_equal_approx(battle_speed, 1.0) else 1.0
+	Engine.time_scale = battle_speed
+	_update_speed_button()
+
+func _toggle_stats_panel() -> void:
+	stats_panel.visible = not stats_panel.visible
+	if stats_panel.visible:
+		log_panel.visible = false
+
+func _toggle_log_panel() -> void:
+	log_panel.visible = not log_panel.visible
+	if log_panel.visible:
+		stats_panel.visible = false
+
+func _update_speed_button() -> void:
+	quick_speed_label.text = Localization.format_text("speed_mode", [battle_speed, Localization.text("quick_speed")])
+
+func _format_random_hint() -> String:
+	var names: Array[String] = []
+	for hero_id in random_hint_ids:
+		var hero_def = GameData.heroes[hero_id]
+		names.append(hero_def.display_name)
+	return " / ".join(names)
+
+func _get_active_trait_count() -> int:
+	var total := run_state.active_global_traits.size()
+	for hero_id in run_state.active_evolution_traits.keys():
+		total += run_state.active_evolution_traits[hero_id].size()
+	return total
+
+func _get_totem_upgrade_cost() -> int:
+	return TOTEM_BASE_COST + ((maxi(1, run_state.totem_level) - 1) * TOTEM_COST_STEP)
+
+func _describe_totem_charge(totem) -> String:
+	match str(totem.effect_id):
+		"freeze":
+			return Localization.format_text("totem_charge_line", [run_state.totem_hit_counter, 8])
+		"poison":
+			return Localization.format_text("totem_charge_line", [run_state.totem_hit_counter, 6])
+		_:
+			return Localization.text("totem_passive")
+
+func _update_lane_guides() -> void:
+	if enemy_layer == null or lane_guides.is_empty():
+		return
+	var gap := 18.0
+	var lane_width := (enemy_layer.size.x - (gap * float(LANE_COUNT - 1))) / float(LANE_COUNT)
+	var lane_height := enemy_layer.size.y - 48.0
+	for lane_index in range(lane_guides.size()):
+		var lane_panel := lane_guides[lane_index]
+		lane_panel.position = Vector2((lane_width + gap) * lane_index, 6)
+		lane_panel.size = Vector2(lane_width, lane_height)
+	leak_line.position = Vector2(0, enemy_layer.size.y - 28)
+	leak_line.size = Vector2(enemy_layer.size.x, 4)
+
+func _to_effect_local(global_point: Vector2) -> Vector2:
+	var effect_rect := effect_layer.get_global_rect()
+	var transform_scale := effect_layer.get_global_transform_with_canvas().get_scale()
+	return Vector2((global_point.x - effect_rect.position.x) / maxf(transform_scale.x, 0.001), (global_point.y - effect_rect.position.y) / maxf(transform_scale.y, 0.001))
+
+func _spawn_beam(start: Vector2, finish: Vector2, color: Color) -> void:
+	var beam := ColorRect.new()
+	beam.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	beam.color = Color(color.r, color.g, color.b, 0.9)
+	var distance := start.distance_to(finish)
+	beam.size = Vector2(distance, 5)
+	beam.pivot_offset = Vector2(0, 2.5)
+	beam.position = start - Vector2(0, 2.5)
+	beam.rotation = start.angle_to_point(finish)
+	effect_layer.add_child(beam)
+	var tween := create_tween()
+	tween.parallel().tween_property(beam, "modulate:a", 0.0, 0.22)
+	tween.parallel().tween_property(beam, "scale:x", 1.08, 0.22)
+	tween.finished.connect(beam.queue_free)
+
+func _spawn_burst(center: Vector2, color: Color, radius: float = 28.0) -> void:
+	var burst := PanelContainer.new()
+	burst.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	burst.position = center - Vector2.ONE * (radius * 0.5)
+	burst.size = Vector2.ONE * radius
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color("15283d")
-	style.corner_radius_top_left = 14
-	style.corner_radius_top_right = 14
-	style.corner_radius_bottom_left = 14
-	style.corner_radius_bottom_right = 14
-	panel.add_theme_stylebox_override("panel", style)
+	style.bg_color = Color(color.r, color.g, color.b, 0.36)
+	style.corner_radius_top_left = 999
+	style.corner_radius_top_right = 999
+	style.corner_radius_bottom_left = 999
+	style.corner_radius_bottom_right = 999
+	burst.add_theme_stylebox_override("panel", style)
+	effect_layer.add_child(burst)
+	burst.scale = Vector2(0.55, 0.55)
+	var tween := create_tween()
+	tween.parallel().tween_property(burst, "scale", Vector2(1.25, 1.25), 0.20)
+	tween.parallel().tween_property(burst, "modulate:a", 0.0, 0.20)
+	tween.finished.connect(burst.queue_free)
+
+func _spawn_ring(center: Vector2, color: Color, radius: float = 70.0) -> void:
+	var ring := PanelContainer.new()
+	ring.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ring.position = center - Vector2.ONE * (radius * 0.5)
+	ring.size = Vector2.ONE * radius
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0, 0, 0, 0)
+	style.border_color = Color(color.r, color.g, color.b, 0.72)
+	style.border_width_left = 2
+	style.border_width_top = 2
+	style.border_width_right = 2
+	style.border_width_bottom = 2
+	style.corner_radius_top_left = 999
+	style.corner_radius_top_right = 999
+	style.corner_radius_bottom_left = 999
+	style.corner_radius_bottom_right = 999
+	ring.add_theme_stylebox_override("panel", style)
+	effect_layer.add_child(ring)
+	ring.scale = Vector2(0.45, 0.45)
+	var tween := create_tween()
+	tween.parallel().tween_property(ring, "scale", Vector2(1.05, 1.05), 0.28)
+	tween.parallel().tween_property(ring, "modulate:a", 0.0, 0.28)
+	tween.finished.connect(ring.queue_free)
+
+func _spawn_spark(center: Vector2, color: Color) -> void:
+	var spark := ColorRect.new()
+	spark.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	spark.color = color
+	spark.position = center - Vector2(9, 9)
+	spark.size = Vector2(18, 18)
+	spark.rotation = PI * 0.25
+	spark.pivot_offset = Vector2(9, 9)
+	effect_layer.add_child(spark)
+	var tween := create_tween()
+	tween.parallel().tween_property(spark, "scale", Vector2(1.8, 1.8), 0.18)
+	tween.parallel().tween_property(spark, "modulate:a", 0.0, 0.18)
+	tween.finished.connect(spark.queue_free)
+
+func _spawn_damage_number(center: Vector2, dealt: float, did_crit: bool) -> void:
+	var label := Label.new()
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.text = _format_damage_number(dealt)
+	label.add_theme_font_size_override("font_size", 20 if not did_crit else 24)
+	label.add_theme_color_override("font_color", Color("fff6e0") if did_crit else Color("ffffff"))
+	label.position = center - Vector2(24, 28)
+	effect_layer.add_child(label)
+	var tween := create_tween()
+	tween.parallel().tween_property(label, "position", label.position + Vector2(0, -18), 0.34)
+	tween.parallel().tween_property(label, "modulate:a", 0.0, 0.34)
+	tween.finished.connect(label.queue_free)
+
+func _format_damage_number(value: float) -> String:
+	if value >= 1000.0:
+		return "%.1fK" % [value / 1000.0]
+	return str(int(round(value)))
+
+func _make_hud_pill(parent: Node) -> Label:
+	var pill := Label.new()
+	pill.custom_minimum_size = Vector2(146, 38)
+	pill.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	pill.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	pill.add_theme_stylebox_override("normal", _make_surface_style(Color("22384b"), Color("7aa6bf"), 999))
+	parent.add_child(pill)
+	return pill
+
+func _make_utility_button() -> Button:
+	var button := Button.new()
+	button.custom_minimum_size = Vector2(74, 36)
+	button.add_theme_stylebox_override("normal", _make_button_style(Color("182936"), Color("90b5cb"), 18))
+	button.add_theme_stylebox_override("hover", _make_button_style(Color("203545"), Color("b4d3e3"), 18))
+	button.add_theme_stylebox_override("pressed", _make_button_style(Color("243d50"), Color("d3ebf7"), 18))
+	button.add_theme_color_override("font_color", Color("edf7ff"))
+	return button
+
+func _make_quick_button(emblem: String) -> Button:
+	var button := Button.new()
+	button.custom_minimum_size = Vector2(82, 82)
+	button.add_theme_stylebox_override("normal", _make_button_style(Color("162735"), Color("8db6cb"), 24))
+	button.add_theme_stylebox_override("hover", _make_button_style(Color("203546"), Color("d9e7ef"), 24))
+	button.add_theme_stylebox_override("pressed", _make_button_style(Color("274151"), Color("edf8ff"), 24))
+	button.add_theme_color_override("font_color", Color("edf7ff"))
+	var content := VBoxContainer.new()
+	content.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	content.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	content.alignment = BoxContainer.ALIGNMENT_CENTER
+	content.add_theme_constant_override("separation", 6)
+	button.add_child(content)
+	var icon := IconBadge.new()
+	icon.custom_minimum_size = Vector2(34, 34)
+	icon.configure(Color("f3bc69"), Color("91562a"), Color("fff4d7"), "button", emblem)
+	content.add_child(icon)
+	var title := Label.new()
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	title.add_theme_font_size_override("font_size", 11)
+	content.add_child(title)
+	button.set_meta("title_label", title)
+	return button
+
+func _build_action_button(button: Button, emblem: String, primary: Color, secondary: Color) -> Label:
+	button.add_theme_stylebox_override("normal", _make_button_style(primary, secondary, 18))
+	button.add_theme_stylebox_override("hover", _make_button_style(primary.lightened(0.08), secondary.lightened(0.08), 18))
+	button.add_theme_stylebox_override("pressed", _make_button_style(primary.darkened(0.06), secondary.darkened(0.06), 18))
+	button.add_theme_color_override("font_color", Color("fff8ef"))
+	button.custom_minimum_size = Vector2(170, 64)
+	var content := HBoxContainer.new()
+	content.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	content.offset_left = 10
+	content.offset_top = 10
+	content.offset_right = -10
+	content.offset_bottom = -10
+	content.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	content.alignment = BoxContainer.ALIGNMENT_CENTER
+	content.add_theme_constant_override("separation", 8)
+	button.add_child(content)
+	var icon_slot := CenterContainer.new()
+	icon_slot.custom_minimum_size = Vector2(40, 40)
+	content.add_child(icon_slot)
+	var icon := IconBadge.new()
+	icon.custom_minimum_size = Vector2(34, 34)
+	icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	icon.configure(primary.lightened(0.1), secondary.darkened(0.05), Color("fff4dd"), "button", emblem)
+	icon_slot.add_child(icon)
+	var copy := VBoxContainer.new()
+	copy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	copy.alignment = BoxContainer.ALIGNMENT_CENTER
+	content.add_child(copy)
+	var title := Label.new()
+	title.add_theme_font_size_override("font_size", 15)
+	copy.add_child(title)
+	var caption := Label.new()
+	caption.add_theme_font_size_override("font_size", 9)
+	caption.add_theme_color_override("font_color", Color(1, 1, 1, 0.72))
+	caption.visible = false
+	copy.add_child(caption)
+	var cost := Label.new()
+	cost.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	cost.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	cost.add_theme_font_size_override("font_size", 17)
+	content.add_child(cost)
+	button.set_meta("title_label", title)
+	button.set_meta("caption_label", caption)
+	return cost
+
+func _make_info_panel(position_value: Vector2, size_value: Vector2) -> PanelContainer:
+	var panel := PanelContainer.new()
+	panel.position = position_value
+	panel.custom_minimum_size = size_value
+	panel.add_theme_stylebox_override("panel", _make_surface_style(Color("162634"), Color("9ec6dc"), 24))
 	return panel
 
-func _make_full_box(parent: Control) -> VBoxContainer:
+func _make_panel_box(panel: Control, margin: int) -> VBoxContainer:
+	var holder := MarginContainer.new()
+	holder.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	holder.add_theme_constant_override("margin_left", margin)
+	holder.add_theme_constant_override("margin_top", margin)
+	holder.add_theme_constant_override("margin_right", margin)
+	holder.add_theme_constant_override("margin_bottom", margin)
+	panel.add_child(holder)
 	var box := VBoxContainer.new()
 	box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	box.offset_left = 16
-	box.offset_top = 16
-	box.offset_right = -16
-	box.offset_bottom = -16
-	box.add_theme_constant_override("separation", 10)
-	parent.add_child(box)
+	box.add_theme_constant_override("separation", 8)
+	holder.add_child(box)
 	return box
 
-func _make_section_title(text: String) -> Label:
-	var label := Label.new()
-	label.text = text
-	label.add_theme_font_size_override("font_size", 18)
-	return label
+func _make_modal_choice_card(index: int, entry: Dictionary) -> PanelContainer:
+	var card := PanelContainer.new()
+	card.custom_minimum_size = Vector2(0, 230)
+	card.add_theme_stylebox_override("panel", _make_surface_style(Color("ffffff"), Color("d8e4eb"), 28))
+	var box := _make_panel_box(card, 16)
+	var crest := IconBadge.new()
+	crest.custom_minimum_size = Vector2(56, 56)
+	crest.configure(_modal_primary_color(index), _modal_secondary_color(index), Color("fff9eb"), "button", "summon" if index % 2 == 0 else "stats")
+	box.add_child(crest)
+	var title := Label.new()
+	title.text = str(entry.get("title", ""))
+	title.add_theme_color_override("font_color", Color("203a4b"))
+	title.add_theme_font_size_override("font_size", 22)
+	box.add_child(title)
+	var desc := Label.new()
+	desc.text = str(entry.get("description", ""))
+	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	desc.add_theme_color_override("font_color", Color("607582"))
+	desc.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	box.add_child(desc)
+	var choose := Button.new()
+	choose.text = Localization.text("select_action")
+	choose.custom_minimum_size = Vector2(0, 44)
+	choose.add_theme_stylebox_override("normal", _make_button_style(_modal_primary_color(index), _modal_secondary_color(index), 18))
+	choose.add_theme_stylebox_override("hover", _make_button_style(_modal_primary_color(index).lightened(0.08), _modal_secondary_color(index).lightened(0.08), 18))
+	choose.add_theme_color_override("font_color", Color("fffaf1"))
+	choose.pressed.connect(_on_modal_option_pressed.bind(index))
+	box.add_child(choose)
+	return card
+
+func _make_surface_style(bg: Color, border: Color, radius: int) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = bg
+	style.border_color = border
+	style.border_width_left = 1
+	style.border_width_top = 1
+	style.border_width_right = 1
+	style.border_width_bottom = 1
+	style.corner_radius_top_left = radius
+	style.corner_radius_top_right = radius
+	style.corner_radius_bottom_left = radius
+	style.corner_radius_bottom_right = radius
+	return style
+
+func _make_button_style(top_color: Color, bottom_color: Color, radius: int) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = top_color.lerp(bottom_color, 0.45)
+	style.border_color = top_color.lightened(0.12)
+	style.border_width_left = 1
+	style.border_width_top = 1
+	style.border_width_right = 1
+	style.border_width_bottom = 1
+	style.corner_radius_top_left = radius
+	style.corner_radius_top_right = radius
+	style.corner_radius_bottom_left = radius
+	style.corner_radius_bottom_right = radius
+	return style
+
+func _apply_palette(icon: IconBadge, base_color: Color, variant_name: String = "avatar", emblem_name: String = "") -> void:
+	icon.configure(base_color.lightened(0.18), base_color.darkened(0.26), Color("f4e2cf"), variant_name, emblem_name)
+
+func _modal_primary_color(index: int) -> Color:
+	var palette := [Color("8cd69a"), Color("f0b15c"), Color("77d2f8")]
+	return palette[index % palette.size()]
+
+func _modal_secondary_color(index: int) -> Color:
+	var palette := [Color("549c63"), Color("c7722b"), Color("3a7db4")]
+	return palette[index % palette.size()]

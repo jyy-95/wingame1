@@ -13,21 +13,21 @@ func process(delta: float, battle_root: Node) -> void:
 		piece.cooldown_remaining -= delta
 		if piece.cooldown_remaining > 0.0:
 			continue
-		var target: EnemyActor = _pick_target(piece, enemies, battle_root)
+		var stats: PieceStats = battle_root.get_piece_combat_stats(piece)
+		var target: EnemyActor = _pick_target(piece, enemies, stats)
 		if target == null:
 			piece.cooldown_remaining = 0.15
 			continue
-		var stats: PieceStats = battle_root.get_piece_combat_stats(piece)
 		_execute_attack(piece, target, enemies, stats, battle_root)
 		piece.cooldown_remaining = maxf(0.08, stats.attack_interval)
 
-func _pick_target(piece: HeroPiece, enemies: Array[EnemyActor], battle_root: Node) -> EnemyActor:
+func _pick_target(piece: HeroPiece, enemies: Array[EnemyActor], stats: PieceStats) -> EnemyActor:
 	var piece_position: Vector2 = piece.get_global_rect().get_center()
 	var target: EnemyActor = null
-	var best_distance: float = INF
+	var best_distance := INF
 	for enemy: EnemyActor in enemies:
-		var distance: float = piece_position.distance_to(enemy.get_global_rect().get_center())
-		if distance > battle_root.get_piece_combat_stats(piece).attack_range:
+		var distance := piece_position.distance_to(enemy.get_global_rect().get_center())
+		if distance > stats.attack_range:
 			continue
 		if distance < best_distance:
 			best_distance = distance
@@ -37,7 +37,7 @@ func _pick_target(piece: HeroPiece, enemies: Array[EnemyActor], battle_root: Nod
 func _execute_attack(piece: HeroPiece, target: EnemyActor, enemies: Array[EnemyActor], stats: PieceStats, battle_root: Node) -> void:
 	var targets: Array[EnemyActor] = [target]
 	if stats.mode == "pierce":
-		var pierce_total: int = 1 + stats.pierce_targets
+		var pierce_total := 1 + stats.pierce_targets
 		for enemy: EnemyActor in enemies:
 			if enemy == target:
 				continue
@@ -75,7 +75,7 @@ func _apply_damage(piece: HeroPiece, enemy: EnemyActor, stats: PieceStats, battl
 		piece.combo_stacks = 0
 		piece.last_target_instance_id = enemy.get_instance_id()
 	damage *= 1.0 + (piece.combo_stacks * stats.combo_pct)
-	var execute_threshold: float = stats.execute_threshold
+	var execute_threshold := stats.execute_threshold
 	if enemy.get_health_ratio() <= execute_threshold:
 		damage *= 3.0
 	var did_crit: bool = battle_root.run_state.rng.randf() <= stats.crit_chance
@@ -104,3 +104,11 @@ func _apply_damage(piece: HeroPiece, enemy: EnemyActor, stats: PieceStats, battl
 			if splash_enemy.position.distance_to(enemy.position) <= stats.crit_splash_radius:
 				var splash_damage: float = splash_enemy.apply_damage(damage * stats.crit_splash_pct)
 				battle_root.run_state.register_damage(piece.get_display_label(), splash_damage)
+	if battle_root.has_method("show_hit_feedback"):
+		battle_root.call("show_hit_feedback", piece, enemy, dealt, {
+			"mode": stats.mode,
+			"crit": did_crit,
+			"freeze": freeze_duration > 0.0,
+			"poison": poison_total > 0.0,
+			"reduced": reduced,
+		})

@@ -4,7 +4,6 @@ extends RefCounted
 const BASE_COST := 10
 const STEP_COST := 2
 const MAX_COST := 30
-const REFRESH_COST := 4
 
 func current_cost(run_state: RunState) -> int:
 	var dynamic_cost := mini(MAX_COST, BASE_COST + (run_state.summon_count * STEP_COST))
@@ -28,15 +27,6 @@ func pay_for_summon(run_state: RunState) -> int:
 		if run_state.summon_discount_charges <= 0:
 			run_state.summon_discount_value = 0
 	return cost
-
-func can_refresh(run_state: RunState) -> bool:
-	return run_state.rerolls > 0 or run_state.gold >= REFRESH_COST
-
-func pay_for_refresh(run_state: RunState) -> bool:
-	if run_state.rerolls > 0:
-		run_state.rerolls -= 1
-		return true
-	return run_state.spend_gold(REFRESH_COST)
 
 func sell_refund(run_state: RunState, purchase_value: int) -> int:
 	var ratio := 0.5

@@ -5,9 +5,10 @@ A desktop single-player Merge tower defense roguelike prototype built with Godot
 ## Included in this prototype
 
 - 5-wave stage flow with a boss on wave 5
-- Random summon, 20-slot board, drag-to-merge, right-click sell
+- Battlefield-first desktop battle UI with a 20-slot deploy strip
+- Pure random summon, drag-to-merge, right-click sell
+- Poison, crit, and frost core totems with in-run upgrades
 - Global trait draft and evolution trait draft
-- Poison, crit, and frost core totems
 - Random events between waves
 - Local save for unlocked stage and last seed
 
@@ -25,10 +26,11 @@ A desktop single-player Merge tower defense roguelike prototype built with Godot
 
 ## Controls
 
-- `Summon Hero`: summon one random hero from the current preview pool
-- `Refresh Preview`: refresh the preview pool
+- `Summon Hero`: summon one random hero from the weighted pool
+- `Upgrade Totem`: spend gold to raise the selected core totem level
 - Drag one hero onto another matching hero to merge
 - Right click a hero to sell it
+- Left rail buttons toggle speed, run intel, and battle log
 
 ## Headless smoke test
 

@@ -1,41 +1,71 @@
 class_name EnemyActor
 extends PanelContainer
 
+const IconBadge = preload("res://scripts/ui/icon_badge.gd")
+
 signal defeated(enemy: EnemyActor)
 signal leaked(enemy: EnemyActor)
 
-var enemy_def: EnemyDef
-var current_hp := 1.0
-var max_hp := 1.0
-var speed := 80.0
-var armor := 0.0
-var reward := 0
-var poison_dps := 0.0
-var poison_time := 0.0
-var freeze_time := 0.0
-var slow_pct := 0.0
-var slow_time := 0.0
-var resolved := false
+var enemy_def
+var current_hp: float = 1.0
+var max_hp: float = 1.0
+var speed: float = 80.0
+var armor: float = 0.0
+var reward: int = 0
+var poison_dps: float = 0.0
+var poison_time: float = 0.0
+var freeze_time: float = 0.0
+var slow_pct: float = 0.0
+var slow_time: float = 0.0
+var resolved: bool = false
 
+var _icon: IconBadge
 var _name_label: Label
-var _hp_label: Label
+var _hp_fill: ColorRect
 
 func _ready() -> void:
-	custom_minimum_size = Vector2(72, 42)
+	custom_minimum_size = Vector2(84, 92)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var margin := MarginContainer.new()
+	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", 5)
+	margin.add_theme_constant_override("margin_top", 4)
+	margin.add_theme_constant_override("margin_right", 5)
+	margin.add_theme_constant_override("margin_bottom", 4)
+	add_child(margin)
 	var box := VBoxContainer.new()
-	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	box.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	add_child(box)
+	box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	box.alignment = BoxContainer.ALIGNMENT_CENTER
+	box.add_theme_constant_override("separation", 4)
+	margin.add_child(box)
+	_icon = IconBadge.new()
+	_icon.custom_minimum_size = Vector2(56, 56)
+	box.add_child(_icon)
 	_name_label = Label.new()
 	_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_name_label.add_theme_font_size_override("font_size", 11)
 	box.add_child(_name_label)
-	_hp_label = Label.new()
-	_hp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	box.add_child(_hp_label)
+	var hp_frame := PanelContainer.new()
+	hp_frame.custom_minimum_size = Vector2(56, 8)
+	var hp_style := StyleBoxFlat.new()
+	hp_style.bg_color = Color(1, 1, 1, 0.14)
+	hp_style.corner_radius_top_left = 999
+	hp_style.corner_radius_top_right = 999
+	hp_style.corner_radius_bottom_left = 999
+	hp_style.corner_radius_bottom_right = 999
+	hp_frame.add_theme_stylebox_override("panel", hp_style)
+	box.add_child(hp_frame)
+	var hp_root := Control.new()
+	hp_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	hp_frame.add_child(hp_root)
+	_hp_fill = ColorRect.new()
+	_hp_fill.anchor_right = 1.0
+	_hp_fill.anchor_bottom = 1.0
+	_hp_fill.color = Color("7be26e")
+	hp_root.add_child(_hp_fill)
 	_update_visuals()
 
-func setup(in_enemy_def: EnemyDef, hp_scale: float, speed_scale: float, reward_bonus: int = 0) -> void:
+func setup(in_enemy_def, hp_scale: float, speed_scale: float, reward_bonus: int = 0) -> void:
 	enemy_def = in_enemy_def
 	max_hp = enemy_def.max_hp * hp_scale
 	current_hp = max_hp
@@ -49,9 +79,7 @@ func tick(delta: float, leak_line_y: float) -> void:
 		return
 	if poison_time > 0.0:
 		poison_time -= delta
-		var poison_damage := apply_damage(poison_dps * delta)
-		if poison_damage > 0.0:
-			_hp_label.text = "%d / %d" % [ceili(current_hp), ceili(max_hp)]
+		apply_damage(poison_dps * delta)
 	if slow_time > 0.0:
 		slow_time -= delta
 	else:
@@ -67,7 +95,7 @@ func tick(delta: float, leak_line_y: float) -> void:
 func apply_damage(raw_damage: float) -> float:
 	if resolved:
 		return 0.0
-	var actual_damage := maxf(1.0, raw_damage - armor)
+	var actual_damage: float = maxf(1.0, raw_damage - armor)
 	current_hp -= actual_damage
 	_update_visuals()
 	if current_hp <= 0.0 and not resolved:
@@ -95,22 +123,33 @@ func get_health_ratio() -> float:
 func _update_visuals() -> void:
 	if _name_label == null:
 		return
-	var display_name: String = enemy_def.display_name if enemy_def != null else Localization.text("event_default")
+	var display_name: String = Localization.text("event_default")
 	if enemy_def != null:
-		var localized_enemy: EnemyDef = GameData.get_enemy(enemy_def.id)
+		display_name = str(enemy_def.display_name)
+		var localized_enemy = GameData.get_enemy(enemy_def.id)
 		if localized_enemy != null:
-			display_name = localized_enemy.display_name
-	_name_label.text = display_name
-	_hp_label.text = "%d / %d" % [ceili(current_hp), ceili(max_hp)]
+			display_name = str(localized_enemy.display_name)
+	_name_label.text = _short_name(display_name)
+	_hp_fill.anchor_right = clampf(get_health_ratio(), 0.0, 1.0)
+	_hp_fill.color = Color("8ddf73") if freeze_time <= 0.0 else Color("84d7ff")
+	var base_color: Color = Color("7a1c1c")
+	if enemy_def != null:
+		base_color = enemy_def.color
 	var style := StyleBoxFlat.new()
-	style.bg_color = enemy_def.color.darkened(0.15) if enemy_def != null else Color("7a1c1c")
-	style.border_color = Color.WHITE
+	style.bg_color = Color(base_color.r, base_color.g, base_color.b, 0.18)
+	style.border_color = base_color.lightened(0.42)
 	style.border_width_left = 1
 	style.border_width_top = 1
 	style.border_width_right = 1
 	style.border_width_bottom = 1
-	style.corner_radius_top_left = 10
-	style.corner_radius_top_right = 10
-	style.corner_radius_bottom_left = 10
-	style.corner_radius_bottom_right = 10
+	style.corner_radius_top_left = 18
+	style.corner_radius_top_right = 18
+	style.corner_radius_bottom_left = 18
+	style.corner_radius_bottom_right = 18
 	add_theme_stylebox_override("panel", style)
+	_icon.configure(base_color.lightened(0.1), base_color.darkened(0.3), Color("f3d8c7"), "avatar")
+
+func _short_name(text: String) -> String:
+	if Localization.is_chinese():
+		return text.substr(0, mini(4, text.length()))
+	return text.substr(0, mini(8, text.length()))
