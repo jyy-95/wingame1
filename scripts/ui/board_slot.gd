@@ -5,7 +5,7 @@ var board_manager
 var slot_index := -1
 
 func _ready() -> void:
-	custom_minimum_size = Vector2(78, 58)
+	custom_minimum_size = Vector2(120, 40)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	_update_visual(false)
 
@@ -42,10 +42,10 @@ func _update_visual(filled: bool) -> void:
 	style.border_width_top = 1
 	style.border_width_right = 1
 	style.border_width_bottom = 1
-	style.corner_radius_top_left = 16
-	style.corner_radius_top_right = 16
-	style.corner_radius_bottom_left = 16
-	style.corner_radius_bottom_right = 16
+	style.corner_radius_top_left = 14
+	style.corner_radius_top_right = 14
+	style.corner_radius_bottom_left = 14
+	style.corner_radius_bottom_right = 14
 	style.shadow_color = Color(0, 0, 0, 0.16)
-	style.shadow_size = 6
+	style.shadow_size = 4
 	add_theme_stylebox_override("panel", style)

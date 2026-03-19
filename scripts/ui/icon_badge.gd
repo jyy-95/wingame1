@@ -7,10 +7,11 @@ var accent_color := Color("ecf7ff")
 var frame_color := Color(1, 1, 1, 0.55)
 var variant := "avatar"
 var emblem := ""
+var icon_texture: Texture2D = null
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	custom_minimum_size = Vector2(72, 72)
+	custom_minimum_size = Vector2(32, 32)
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_RESIZED:
@@ -24,10 +25,39 @@ func configure(in_primary: Color, in_secondary: Color, in_accent: Color, in_vari
 	emblem = in_emblem
 	queue_redraw()
 
+func configure_with_texture(in_texture: Texture2D, in_primary: Color = Color.WHITE) -> void:
+	icon_texture = in_texture
+	primary_color = in_primary
+	variant = "texture"
+	queue_redraw()
+
 func _draw() -> void:
 	var rect := Rect2(Vector2.ZERO, size)
 	var radius := int(round(minf(size.x, size.y) * 0.28))
 	var inner := rect.grow(-6.0)
+
+	if variant == "texture" and icon_texture != null:
+		# 绘制带边框的纹理图标
+		var base_style := StyleBoxFlat.new()
+		base_style.bg_color = secondary_color.darkened(0.08)
+		base_style.border_color = frame_color
+		base_style.border_width_left = 2
+		base_style.border_width_top = 2
+		base_style.border_width_right = 2
+		base_style.border_width_bottom = 2
+		base_style.corner_radius_top_left = radius
+		base_style.corner_radius_top_right = radius
+		base_style.corner_radius_bottom_left = radius
+		base_style.corner_radius_bottom_right = radius
+		draw_style_box(base_style, rect)
+		# 绘制纹理，保持宽高比
+		var texture_size = icon_texture.get_size()
+		var scale = minf(inner.size.x / texture_size.x, inner.size.y / texture_size.y) * 0.85
+		var scaled_size = texture_size * scale
+		var pos = inner.position + (inner.size - scaled_size) * 0.5
+		draw_texture_rect(icon_texture, Rect2(pos, scaled_size), false)
+		return
+
 	if variant == "avatar":
 		var base_style := StyleBoxFlat.new()
 		base_style.bg_color = secondary_color.darkened(0.08)

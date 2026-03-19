@@ -1,0 +1,130 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Asset Gallery</title>
+<style>
+  :root {
+    --bg: #e2edf2;
+    --panel: rgba(24, 38, 49, 0.78);
+    --panel-soft: rgba(255, 255, 255, 0.22);
+    --ink: #f7fbff;
+    --muted: rgba(247, 251, 255, 0.72);
+    --accent: #ffb24c;
+    --line: rgba(255, 255, 255, 0.14);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", "Microsoft YaHei UI", sans-serif;
+    color: var(--ink);
+    background: radial-gradient(circle at top, #f7fbff 0%, #d7e6eb 42%, #b6ccd3 100%);
+  }
+  .page {
+    width: min(1480px, calc(100vw - 48px));
+    margin: 24px auto 40px;
+    display: grid;
+    gap: 20px;
+  }
+  .hero {
+    background: linear-gradient(180deg, rgba(28, 48, 62, 0.88), rgba(18, 29, 38, 0.92));
+    border-radius: 28px;
+    padding: 28px;
+    border: 1px solid var(--line);
+    box-shadow: 0 26px 60px rgba(12, 23, 32, 0.28);
+  }
+  h1,h2,p { margin: 0; }
+  .hero h1 { font-size: 34px; letter-spacing: 0.04em; }
+  .hero p { margin-top: 10px; color: var(--muted); max-width: 900px; line-height: 1.65; }
+  .hero .meta { margin-top: 14px; color: #ffd597; font-weight: 700; }
+  .section {
+    background: var(--panel);
+    border-radius: 24px;
+    padding: 22px;
+    border: 1px solid var(--line);
+    box-shadow: 0 16px 42px rgba(12, 23, 32, 0.2);
+  }
+  .section h2 { font-size: 22px; margin-bottom: 6px; }
+  .section p { color: var(--muted); margin-bottom: 18px; }
+  .grid {
+    display: grid;
+    gap: 16px;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+  .card {
+    background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.04));
+    border-radius: 22px;
+    padding: 16px;
+    border: 1px solid rgba(255,255,255,0.12);
+  }
+  .card img {
+    width: 100%;
+    aspect-ratio: 1;
+    display: block;
+    border-radius: 18px;
+    background: rgba(255,255,255,0.08);
+    object-fit: cover;
+  }
+  .wide img { aspect-ratio: 16 / 9; }
+  .label {
+    margin-top: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .label strong { font-size: 17px; }
+  .label span { color: #ffd597; font-size: 13px; }
+  .desc { margin-top: 8px; color: var(--muted); font-size: 14px; line-height: 1.6; }
+</style>
+</head>
+<body>
+  <div class="page">
+    <section class="hero">
+      <h1>西方魔幻卡通素材首版</h1>
+      <p>这组资源优先服务你当前的战斗界面方向，强调可爱、清晰、可读的桌面塔防观感。英雄和敌人采用圆润的半身徽章式头像，背景保持轻故事感，特效则走高亮、可叠加、易读的打击反馈路线。</p>
+      <div class="meta">重点参考：demo/ui-refresh-preview.html 的布局、配色节奏和组件气质</div>
+    </section>
+
+    <section class="section">
+      <h2>英雄图标</h2>
+      <p>四个英雄头像采用统一外轮廓、统一描边和不同元素标识，适合卡牌、部署格、头像框和底部操作区。</p>
+      <div class="grid">
+        <div class="card"><img src="../assets/generated/heroes/frost_oracle.svg" alt="霜语先知" /><div class="label"><strong>霜语先知</strong><span>控制 / 冰霜</span></div><div class="desc">冷色高光、十字冰纹、柔和脸部比例，适合作为法系控制英雄。</div></div>
+        <div class="card"><img src="../assets/generated/heroes/ember_knight.svg" alt="余烬骑士" /><div class="label"><strong>余烬骑士</strong><span>爆发 / 火焰</span></div><div class="desc">暖色铠甲和光刃造型，适合作为前排近战或高爆发近卫。</div></div>
+        <div class="card"><img src="../assets/generated/heroes/grove_alchemist.svg" alt="林沼药师" /><div class="label"><strong>林沼药师</strong><span>持续 / 毒性</span></div><div class="desc">药剂徽记明显，整体更亲和，适合毒伤或辅助系单位。</div></div>
+        <div class="card"><img src="../assets/generated/heroes/storm_ranger.svg" alt="风暴游侠" /><div class="label"><strong>风暴游侠</strong><span>远程 / 电击</span></div><div class="desc">星形电矢图形更利于远程职业识别，适合速射和链击。</div></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>敌人图标</h2>
+      <p>敌人风格偏可爱反派，保留邪性但避免写实恐怖，更适合休闲塔防项目的整体气质。</p>
+      <div class="grid">
+        <div class="card"><img src="../assets/generated/enemies/shadow_batling.svg" alt="影翼蝠灵" /><div class="label"><strong>影翼蝠灵</strong><span>飞行 / 干扰</span></div><div class="desc">夸张翅膀和亮色面部让它在战场里更易辨认，适合飞行杂兵。</div></div>
+        <div class="card"><img src="../assets/generated/enemies/bog_spiderling.svg" alt="沼泽蛛幼" /><div class="label"><strong>沼泽蛛幼</strong><span>地面 / 中毒</span></div><div class="desc">圆壳和多足做成卡通化处理，保留毒物属性但不过分压迫。</div></div>
+      </div>
+    </section>
+
+    <section class="section wide">
+      <h2>地图背景</h2>
+      <p>背景延续你当前参考图的“中央路径 + 两侧环境包裹”逻辑，但适配桌面横屏和横向部署带。</p>
+      <div class="grid">
+        <div class="card wide"><img src="../assets/generated/backgrounds/whimsy_forest_lane.svg" alt="幽林路径背景" /><div class="label"><strong>幽林路径</strong><span>1600 x 900</span></div><div class="desc">中路推进、两侧林地包边、底部核心平台可直接作为战斗主场景概念底图。</div></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>打击与技能特效</h2>
+      <p>特效优先考虑战场信息反馈，适合叠在单位上方或命中点，不会遮挡过多地图。</p>
+      <div class="grid">
+        <div class="card"><img src="../assets/generated/effects/frost_beam.svg" alt="寒霜射线" /><div class="label"><strong>寒霜射线</strong><span>线性锁定</span></div><div class="desc">适合冰法、图腾射线、减速链路等持续攻击效果。</div></div>
+        <div class="card"><img src="../assets/generated/effects/arcane_burst.svg" alt="奥术爆裂" /><div class="label"><strong>奥术爆裂</strong><span>范围命中</span></div><div class="desc">适合爆炸、火焰、法球命中的瞬时大反馈。</div></div>
+        <div class="card"><img src="../assets/generated/effects/impact_spark.svg" alt="命中火花" /><div class="label"><strong>命中火花</strong><span>单体命中</span></div><div class="desc">适合普攻、暴击、短时电弧，做命中层会很清楚。</div></div>
+        <div class="card"><img src="../assets/generated/effects/freeze_ring.svg" alt="冻结光环" /><div class="label"><strong>冻结光环</strong><span>控制区域</span></div><div class="desc">适合冻结、减速、结界、站位圈等地面型提示。</div></div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

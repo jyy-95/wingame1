@@ -50,12 +50,21 @@ func spawn_hero(hero_id: String, purchase_value: int) -> HeroPiece:
 	var piece: HeroPiece = HeroPiece.new()
 	piece.setup(hero_def, 1, purchase_value, self)
 	piece.sell_requested.connect(_on_piece_sell_requested)
-	for slot in slots:
-		if not slot.has_piece():
-			slot.add_child(piece)
-			board_changed.emit()
-			return piece
-	return null
+
+	# 随机选择一个空槽位
+	var empty_slots: Array[int] = []
+	for index in range(slots.size()):
+		if not slots[index].has_piece():
+			empty_slots.append(index)
+
+	if empty_slots.is_empty():
+		return null
+
+	var random_index = battle_root.run_state.rng.randi_range(0, empty_slots.size() - 1)
+	var target_slot = slots[empty_slots[random_index]]
+	target_slot.add_child(piece)
+	board_changed.emit()
+	return piece
 
 func handle_drop(piece: HeroPiece, target_slot: BoardSlot) -> void:
 	var source_slot := piece.get_parent() as BoardSlot
@@ -71,6 +80,11 @@ func handle_drop(piece: HeroPiece, target_slot: BoardSlot) -> void:
 		source_slot.remove_child(piece)
 		piece.queue_free()
 		target_piece.upgrade_to(target_piece.star_level + 1, piece.purchase_value)
+
+		# 播放合并音效
+		if AudioManager != null:
+			AudioManager.play_merge()
+
 		board_changed.emit()
 		evolution_ready.emit(target_piece.hero_def.id, target_piece.star_level)
 		return

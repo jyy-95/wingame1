@@ -94,31 +94,31 @@ func _to_string_array(values: Array) -> Array[String]:
 
 func _build_heroes() -> void:
 	for hero_def in [
-		_make_hero("ember_mage", _txt("Ember Mage", "烬火法师"), "striker", "single", Color("ff7b54"), 14.0, 0.95, 245.0, 0.0, ["burn", "crit"], ["fire", "burst"]),
-		_make_hero("frost_oracle", _txt("Frost Oracle", "霜语先知"), "control", "single", Color("7fd4ff"), 10.0, 1.1, 250.0, 0.0, ["freeze", "slow"], ["ice", "control"]),
-		_make_hero("tide_guard", _txt("Tide Guard", "潮汐卫士"), "vanguard", "splash", Color("4ca6ff"), 11.0, 1.2, 210.0, 55.0, ["armor", "wave"], ["water", "front"]),
-		_make_hero("blade_dancer", _txt("Blade Dancer", "刃舞者"), "striker", "single", Color("ffe082"), 16.0, 0.85, 185.0, 0.0, ["execute", "combo"], ["blade", "burst"]),
-		_make_hero("venom_sage", _txt("Venom Sage", "蚀毒贤者"), "control", "single", Color("82d173"), 9.0, 0.9, 240.0, 0.0, ["poison", "amplify"], ["poison", "dot"]),
-		_make_hero("storm_caller", _txt("Storm Caller", "风暴召唤师"), "striker", "splash", Color("c8a2ff"), 13.0, 1.15, 235.0, 70.0, ["chain", "storm"], ["storm", "aoe"]),
-		_make_hero("iron_warden", _txt("Iron Warden", "铁壁守卫"), "vanguard", "single", Color("b0bec5"), 12.0, 1.05, 200.0, 0.0, ["guard", "wall"], ["tank", "front"]),
-		_make_hero("solar_priest", _txt("Solar Priest", "曜光祭司"), "striker", "pierce", Color("ffd166"), 12.5, 1.0, 260.0, 0.0, ["solar", "focus"], ["light", "support"])
+		_make_hero("ember_mage", _txt("Ember Mage", "烬火法师"), "striker", "single", Color("ff7b54"), 14.0, 0.95, 2000.0, 0.0, ["burn", "crit"], ["fire", "burst"]),
+		_make_hero("frost_oracle", _txt("Frost Oracle", "霜语先知"), "control", "single", Color("7fd4ff"), 10.0, 1.1, 2000.0, 0.0, ["freeze", "slow"], ["ice", "control"]),
+		_make_hero("tide_guard", _txt("Tide Guard", "潮汐卫士"), "vanguard", "splash", Color("4ca6ff"), 11.0, 1.2, 2000.0, 55.0, ["armor", "wave"], ["water", "front"]),
+		_make_hero("blade_dancer", _txt("Blade Dancer", "刃舞者"), "striker", "single", Color("ffe082"), 16.0, 0.85, 2000.0, 0.0, ["execute", "combo"], ["blade", "burst"]),
+		_make_hero("venom_sage", _txt("Venom Sage", "蚀毒贤者"), "control", "single", Color("82d173"), 9.0, 0.9, 2000.0, 0.0, ["poison", "amplify"], ["poison", "dot"]),
+		_make_hero("storm_caller", _txt("Storm Caller", "风暴召唤师"), "striker", "splash", Color("c8a2ff"), 13.0, 1.15, 2000.0, 70.0, ["chain", "storm"], ["storm", "aoe"]),
+		_make_hero("iron_warden", _txt("Iron Warden", "铁壁守卫"), "vanguard", "single", Color("b0bec5"), 12.0, 1.05, 2000.0, 0.0, ["guard", "wall"], ["tank", "front"]),
+		_make_hero("solar_priest", _txt("Solar Priest", "曜光祭司"), "striker", "pierce", Color("ffd166"), 12.5, 1.0, 2000.0, 0.0, ["solar", "focus"], ["light", "support"])
 	]:
 		heroes[hero_def.id] = hero_def
 
 func _build_enemies() -> void:
 	var specs: Array = [
-		["slime", _txt("Stone Slime", "岩壳史莱姆"), "90c978", 55.0, 82.0, 0.0, 4, 1, false, ["grunt"]],
-		["scout", _txt("Spike Scout", "尖刺斥候"), "f4d35e", 42.0, 122.0, 0.0, 4, 1, false, ["fast"]],
-		["shell", _txt("Shell Guard", "壳甲守卫"), "8d99ae", 90.0, 72.0, 8.0, 5, 1, false, ["armor"]],
-		["mender", _txt("Brood Mender", "巢群医者"), "52b788", 84.0, 76.0, 0.0, 6, 1, false, ["regen"]],
-		["spitter", _txt("Acid Spitter", "酸液喷吐者"), "b56576", 68.0, 88.0, 2.0, 5, 1, false, ["acid"]],
-		["crusher", _txt("Rift Crusher", "裂隙粉碎者"), "6d597a", 138.0, 60.0, 10.0, 7, 2, false, ["elite"]],
-		["phantom", _txt("Phase Phantom", "相位幽灵"), "9d4edd", 58.0, 108.0, 4.0, 6, 1, false, ["phase"]],
-		["healer", _txt("Spirit Healer", "灵能医师"), "84a59d", 74.0, 74.0, 0.0, 6, 1, false, ["support"]],
-		["juggernaut", _txt("Juggernaut", "铁甲巨兽"), "495057", 185.0, 52.0, 16.0, 9, 2, false, ["elite", "armor"]],
-		["wyrm_boss", _txt("Tidal Wyrm", "潮汐巨龙"), "277da1", 620.0, 48.0, 8.0, 35, 3, true, ["boss"]],
-		["lich_boss", _txt("Frost Lich", "霜魂巫妖"), "8ecae6", 580.0, 55.0, 4.0, 35, 3, true, ["boss"]],
-		["forge_boss", _txt("Forge Warden", "熔炉典狱官"), "e76f51", 700.0, 45.0, 12.0, 40, 3, true, ["boss", "armor"]]
+		["slime", _txt("Stone Slime", "岩壳史莱姆"), "90c978", 55.0, 20.0, 0.0, 4, 1, false, ["grunt"]],
+		["scout", _txt("Spike Scout", "尖刺斥候"), "f4d35e", 42.0, 25.0, 0.0, 4, 1, false, ["fast"]],
+		["shell", _txt("Shell Guard", "壳甲守卫"), "8d99ae", 90.0, 18.0, 8.0, 5, 1, false, ["armor"]],
+		["mender", _txt("Brood Mender", "巢群医者"), "52b788", 84.0, 16.0, 0.0, 6, 1, false, ["regen"]],
+		["spitter", _txt("Acid Spitter", "酸液喷吐者"), "b56576", 68.0, 22.0, 2.0, 5, 1, false, ["acid"]],
+		["crusher", _txt("Rift Crusher", "裂隙粉碎者"), "6d597a", 138.0, 15.0, 10.0, 7, 2, false, ["elite"]],
+		["phantom", _txt("Phase Phantom", "相位幽灵"), "9d4edd", 58.0, 28.0, 4.0, 6, 1, false, ["phase"]],
+		["healer", _txt("Spirit Healer", "灵能医师"), "84a59d", 74.0, 14.0, 0.0, 6, 1, false, ["support"]],
+		["juggernaut", _txt("Juggernaut", "铁甲巨兽"), "495057", 185.0, 12.0, 16.0, 9, 2, false, ["elite", "armor"]],
+		["wyrm_boss", _txt("Tidal Wyrm", "潮汐巨龙"), "277da1", 620.0, 10.0, 8.0, 35, 3, true, ["boss"]],
+		["lich_boss", _txt("Frost Lich", "霜魂巫妖"), "8ecae6", 580.0, 8.0, 4.0, 35, 3, true, ["boss"]],
+		["forge_boss", _txt("Forge Warden", "熔炉典狱官"), "e76f51", 700.0, 6.0, 12.0, 40, 3, true, ["boss", "armor"]]
 	]
 	for spec in specs:
 		var enemy_def: EnemyDef = EnemyDef.new()

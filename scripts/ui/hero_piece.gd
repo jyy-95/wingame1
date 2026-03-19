@@ -2,6 +2,7 @@ class_name HeroPiece
 extends PanelContainer
 
 const IconBadge = preload("res://scripts/ui/icon_badge.gd")
+const ArtCatalog = preload("res://scripts/ui/art_catalog.gd")
 
 signal sell_requested(piece: HeroPiece)
 
@@ -128,7 +129,11 @@ func _update_visuals() -> void:
 	style.corner_radius_bottom_left = 16
 	style.corner_radius_bottom_right = 16
 	add_theme_stylebox_override("panel", style)
-	_icon.configure(base_color.lightened(0.18), base_color.darkened(0.24), Color("f5e4d1"), "avatar")
+	var texture := ArtCatalog.get_hero_texture(hero_def.id if hero_def != null else "")
+	if texture != null:
+		_icon.configure_with_texture(texture, base_color)
+	else:
+		_icon.configure(base_color.lightened(0.18), base_color.darkened(0.24), Color("f5e4d1"), "avatar")
 
 func _short_name(text: String) -> String:
 	if Localization.is_chinese():

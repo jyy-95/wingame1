@@ -2,6 +2,7 @@ class_name EnemyActor
 extends PanelContainer
 
 const IconBadge = preload("res://scripts/ui/icon_badge.gd")
+const ArtCatalog = preload("res://scripts/ui/art_catalog.gd")
 
 signal defeated(enemy: EnemyActor)
 signal leaked(enemy: EnemyActor)
@@ -147,7 +148,11 @@ func _update_visuals() -> void:
 	style.corner_radius_bottom_left = 18
 	style.corner_radius_bottom_right = 18
 	add_theme_stylebox_override("panel", style)
-	_icon.configure(base_color.lightened(0.1), base_color.darkened(0.3), Color("f3d8c7"), "avatar")
+	var texture := ArtCatalog.get_enemy_texture(enemy_def.id if enemy_def != null else "")
+	if texture != null:
+		_icon.configure_with_texture(texture, base_color)
+	else:
+		_icon.configure(base_color.lightened(0.1), base_color.darkened(0.3), Color("f3d8c7"), "avatar")
 
 func _short_name(text: String) -> String:
 	if Localization.is_chinese():

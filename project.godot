@@ -24,6 +24,7 @@ config/icon="res://assets/icon.svg"
 SaveService="*res://scripts/core/save_service.gd"
 Localization="*res://scripts/core/localization.gd"
 GameData="*res://scripts/core/game_data.gd"
+AudioManager="*res://scripts/core/audio_manager.gd"
 
 [display]
 

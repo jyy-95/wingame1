@@ -1,40 +1,40 @@
-# Azure Planet Merge TD
+#  Azure Planet Merge TD（星辰 merges 塔防）
 
-A desktop single-player Merge tower defense roguelike prototype built with Godot 4.
+一款基于 Godot 4 开发的桌面单人合并塔防 Roguelike 原型游戏。
 
-## Included in this prototype
+## 原型内容
 
-- 5-wave stage flow with a boss on wave 5
-- Battlefield-first desktop battle UI with a 20-slot deploy strip
-- Pure random summon, drag-to-merge, right-click sell
-- Poison, crit, and frost core totems with in-run upgrades
-- Global trait draft and evolution trait draft
-- Random events between waves
-- Local save for unlocked stage and last seed
+- 5 波次关卡流程，第 5 波为首领战
+- 以战场为核心的桌面战斗界面，20 格部署带
+- 纯随机召唤、拖拽合并、右键出售
+- 毒液、暴击、冰冻三种核心图腾，可在局内升级
+- 全局天赋三选一与英雄进化天赋三选一
+- 波次间的随机事件
+- 本地存档记录已解锁关卡与上次种子
 
-## Open the project
+## 打开项目
 
-1. Open Godot 4.x.
-2. Click Import.
-3. Select `project.godot` in this folder.
-4. Open the imported project.
+1. 打开 Godot 4.x
+2. 点击"导入"（Import）
+3. 选择本目录下的 `project.godot` 文件
+4. 打开导入后的项目
 
-## Run
+## 运行
 
-- Press F5 to run the main scene.
-- If Godot asks for a main scene, choose `res://scenes/main/main.tscn`.
+- 按 F5 运行主场景
+- 如果 Godot 提示选择主场景，请选择 `res://scenes/main/main.tscn`
 
-## Controls
+## 操作说明
 
-- `Summon Hero`: summon one random hero from the weighted pool
-- `Upgrade Totem`: spend gold to raise the selected core totem level
-- Drag one hero onto another matching hero to merge
-- Right click a hero to sell it
-- Left rail buttons toggle speed, run intel, and battle log
+- `召唤英雄`：从加权池中随机召唤一名英雄
+- `升级图腾`：花费金币提升当前核心图腾等级
+- 拖拽一名英雄到相同的英雄身上进行合并
+- 右键点击英雄出售
+- 左侧栏杆按钮切换速度、对局统计和战斗日志
 
-## Headless smoke test
+## 无头烟雾测试
 
-If `godot4` is available in PATH:
+如果 `godot4` 已在系统 PATH 中：
 
 ```powershell
 godot4 --headless --path . -s res://tests/run_smoke_tests.gd

@@ -11,6 +11,7 @@ const PieceStats = preload("res://scripts/core/piece_stats.gd")
 const BoardManager = preload("res://scripts/ui/board_manager.gd")
 const EnemyActor = preload("res://scripts/ui/enemy_actor.gd")
 const IconBadge = preload("res://scripts/ui/icon_badge.gd")
+const ArtCatalog = preload("res://scripts/ui/art_catalog.gd")
 
 const LANE_COUNT := 4
 const MAX_LOG_LINES := 14
@@ -369,8 +370,20 @@ func _build_battlefield(shell: Control) -> void:
 	var arena_back := PanelContainer.new()
 	arena_back.position = Vector2(18, 18)
 	arena_back.size = Vector2(1204, 394)
+	arena_back.clip_contents = true
 	arena_back.add_theme_stylebox_override("panel", _make_surface_style(Color("2a3f51"), Color(1, 1, 1, 0.06), 20))
 	battlefield_canvas.add_child(arena_back)
+	var arena_background := TextureRect.new()
+	arena_background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	arena_background.texture = ArtCatalog.get_battlefield_background()
+	arena_background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	arena_background.stretch_mode = TextureRect.STRETCH_SCALE
+	arena_background.modulate = Color(1, 1, 1, 0.58)
+	arena_back.add_child(arena_background)
+	var arena_vignette := ColorRect.new()
+	arena_vignette.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	arena_vignette.color = Color(0.08, 0.12, 0.18, 0.34)
+	arena_back.add_child(arena_vignette)
 	enemy_layer = Control.new()
 	enemy_layer.position = Vector2(102, 20)
 	enemy_layer.size = Vector2(1000, 348)
