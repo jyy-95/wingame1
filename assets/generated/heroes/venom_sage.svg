@@ -1,0 +1,25 @@
+﻿<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="32" y1="24" x2="224" y2="232" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9EE091"/>
+      <stop offset="1" stop-color="#2E885A"/>
+    </linearGradient>
+    <linearGradient id="cloak" x1="128" y1="84" x2="128" y2="212" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F3FFBF"/>
+      <stop offset="1" stop-color="#6CC377"/>
+    </linearGradient>
+  </defs>
+  <rect x="16" y="16" width="224" height="224" rx="56" fill="url(#bg)"/>
+  <circle cx="128" cy="128" r="95" fill="#F7FFEC" fill-opacity="0.14"/>
+  <path d="M80 202C86 155 104 123 128 123C152 123 170 155 176 202" fill="url(#cloak)" stroke="#20523E" stroke-width="10" stroke-linejoin="round"/>
+  <path d="M97 112C97 84 111 61 128 61C145 61 159 84 159 112V121H97V112Z" fill="#FFE8CB" stroke="#20523E" stroke-width="10"/>
+  <path d="M92 104C101 79 113 72 128 72C143 72 155 79 164 104" stroke="#5A8742" stroke-width="12" stroke-linecap="round"/>
+  <circle cx="117" cy="111" r="6" fill="#20523E"/>
+  <circle cx="140" cy="111" r="6" fill="#20523E"/>
+  <path d="M118 128C124 132 132 132 138 128" stroke="#20523E" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="128" cy="171" r="26" fill="#F5FFDD" stroke="#20523E" stroke-width="10"/>
+  <path d="M128 156V186" stroke="#20523E" stroke-width="8" stroke-linecap="round"/>
+  <path d="M113 171H143" stroke="#20523E" stroke-width="8" stroke-linecap="round"/>
+  <path d="M103 92C84 95 73 103 69 122" stroke="#D7FF9A" stroke-width="10" stroke-linecap="round"/>
+  <path d="M186 92C172 94 163 101 159 116" stroke="#D7FF9A" stroke-width="10" stroke-linecap="round"/>
+</svg>

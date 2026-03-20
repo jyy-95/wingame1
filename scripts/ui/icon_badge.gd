@@ -34,10 +34,9 @@ func configure_with_texture(in_texture: Texture2D, in_primary: Color = Color.WHI
 func _draw() -> void:
 	var rect := Rect2(Vector2.ZERO, size)
 	var radius := int(round(minf(size.x, size.y) * 0.28))
-	var inner := rect.grow(-6.0)
+	var inner := rect.grow(-1.0)
 
 	if variant == "texture" and icon_texture != null:
-		# 绘制带边框的纹理图标
 		var base_style := StyleBoxFlat.new()
 		base_style.bg_color = secondary_color.darkened(0.08)
 		base_style.border_color = frame_color
@@ -50,12 +49,20 @@ func _draw() -> void:
 		base_style.corner_radius_bottom_left = radius
 		base_style.corner_radius_bottom_right = radius
 		draw_style_box(base_style, rect)
-		# 绘制纹理，保持宽高比
-		var texture_size = icon_texture.get_size()
-		var scale = minf(inner.size.x / texture_size.x, inner.size.y / texture_size.y) * 0.85
-		var scaled_size = texture_size * scale
-		var pos = inner.position + (inner.size - scaled_size) * 0.5
-		draw_texture_rect(icon_texture, Rect2(pos, scaled_size), false)
+		var texture_size := icon_texture.get_size()
+		if texture_size.x > 0.0 and texture_size.y > 0.0:
+			var source := Rect2(Vector2.ZERO, texture_size)
+			var texture_ratio := texture_size.x / texture_size.y
+			var target_ratio := inner.size.x / maxf(1.0, inner.size.y)
+			if texture_ratio > target_ratio:
+				var crop_width := texture_size.y * target_ratio
+				source.position.x = (texture_size.x - crop_width) * 0.5
+				source.size.x = crop_width
+			else:
+				var crop_height := texture_size.x / target_ratio
+				source.position.y = (texture_size.y - crop_height) * 0.5
+				source.size.y = crop_height
+			draw_texture_rect_region(icon_texture, inner, source, Color.WHITE, false)
 		return
 
 	if variant == "avatar":

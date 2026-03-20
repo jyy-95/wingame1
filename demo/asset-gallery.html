@@ -1,130 +1,68 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Asset Gallery</title>
 <style>
-  :root {
-    --bg: #e2edf2;
-    --panel: rgba(24, 38, 49, 0.78);
-    --panel-soft: rgba(255, 255, 255, 0.22);
-    --ink: #f7fbff;
-    --muted: rgba(247, 251, 255, 0.72);
-    --accent: #ffb24c;
-    --line: rgba(255, 255, 255, 0.14);
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    font-family: "Segoe UI", "Microsoft YaHei UI", sans-serif;
-    color: var(--ink);
-    background: radial-gradient(circle at top, #f7fbff 0%, #d7e6eb 42%, #b6ccd3 100%);
-  }
-  .page {
-    width: min(1480px, calc(100vw - 48px));
-    margin: 24px auto 40px;
-    display: grid;
-    gap: 20px;
-  }
-  .hero {
-    background: linear-gradient(180deg, rgba(28, 48, 62, 0.88), rgba(18, 29, 38, 0.92));
-    border-radius: 28px;
-    padding: 28px;
-    border: 1px solid var(--line);
-    box-shadow: 0 26px 60px rgba(12, 23, 32, 0.28);
-  }
-  h1,h2,p { margin: 0; }
-  .hero h1 { font-size: 34px; letter-spacing: 0.04em; }
-  .hero p { margin-top: 10px; color: var(--muted); max-width: 900px; line-height: 1.65; }
-  .hero .meta { margin-top: 14px; color: #ffd597; font-weight: 700; }
-  .section {
-    background: var(--panel);
-    border-radius: 24px;
-    padding: 22px;
-    border: 1px solid var(--line);
-    box-shadow: 0 16px 42px rgba(12, 23, 32, 0.2);
-  }
-  .section h2 { font-size: 22px; margin-bottom: 6px; }
-  .section p { color: var(--muted); margin-bottom: 18px; }
-  .grid {
-    display: grid;
-    gap: 16px;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  }
-  .card {
-    background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.04));
-    border-radius: 22px;
-    padding: 16px;
-    border: 1px solid rgba(255,255,255,0.12);
-  }
-  .card img {
-    width: 100%;
-    aspect-ratio: 1;
-    display: block;
-    border-radius: 18px;
-    background: rgba(255,255,255,0.08);
-    object-fit: cover;
-  }
-  .wide img { aspect-ratio: 16 / 9; }
-  .label {
-    margin-top: 12px;
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 10px;
-  }
-  .label strong { font-size: 17px; }
-  .label span { color: #ffd597; font-size: 13px; }
-  .desc { margin-top: 8px; color: var(--muted); font-size: 14px; line-height: 1.6; }
+:root{--panel:rgba(24,38,49,.78);--ink:#f7fbff;--muted:rgba(247,251,255,.72);--line:rgba(255,255,255,.14);}
+*{box-sizing:border-box;}
+body{margin:0;font-family:"Segoe UI","Microsoft YaHei UI",sans-serif;color:var(--ink);background:radial-gradient(circle at top,#f7fbff 0%,#d7e6eb 42%,#b6ccd3 100%);}
+.page{width:min(1480px,calc(100vw - 48px));margin:24px auto 40px;display:grid;gap:20px;}
+.hero,.section{background:var(--panel);border-radius:24px;padding:22px 24px;border:1px solid var(--line);box-shadow:0 18px 48px rgba(12,23,32,.22);}
+.hero h1{margin:0;font-size:34px;}
+.hero p,.section p{margin:10px 0 0;color:var(--muted);line-height:1.65;}
+.hero .meta{margin-top:14px;color:#ffd597;font-weight:700;}
+.grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin-top:18px;}
+.card{background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.04));border-radius:22px;padding:16px;border:1px solid rgba(255,255,255,.12);}
+img{width:100%;display:block;border-radius:18px;background:rgba(255,255,255,.08);aspect-ratio:1;object-fit:cover;}
+.wide img{aspect-ratio:16/9;}
+.label{margin-top:12px;display:flex;justify-content:space-between;gap:10px;align-items:baseline;}
+.label strong{font-size:17px;}
+.label span{font-size:13px;color:#ffd597;}
+.desc{margin-top:8px;color:var(--muted);font-size:14px;line-height:1.6;}
 </style>
 </head>
 <body>
-  <div class="page">
-    <section class="hero">
-      <h1>西方魔幻卡通素材首版</h1>
-      <p>这组资源优先服务你当前的战斗界面方向，强调可爱、清晰、可读的桌面塔防观感。英雄和敌人采用圆润的半身徽章式头像，背景保持轻故事感，特效则走高亮、可叠加、易读的打击反馈路线。</p>
-      <div class="meta">重点参考：demo/ui-refresh-preview.html 的布局、配色节奏和组件气质</div>
-    </section>
+<div class="page">
+<section class="hero">
+<h1>西方魔幻卡通素材增强版</h1>
+<p>这一版继续围绕你当前游戏的主战斗界面做纯美术升级：保持现有布局和玩法逻辑不变，只强化角色辨识、敌人层级、背景氛围和打击反馈。整体气质仍然重点参考 demo/ui-refresh-preview.html。</p>
+<div class="meta">重点参考：demo/ui-refresh-preview.html 的色调、亲和感、卡通西幻氛围和战场主次</div>
+</section>
+<section class="section">
+<h2>英雄图标</h2>
+<p>8 名英雄已拆成一对一资源，并继续拉开职业区分。</p>
+<div class="grid"><div class="card"><img src="../assets/generated/heroes/ember_mage.svg" alt="烬火法师" /><div class="label"><strong>烬火法师</strong><span>火焰 / 爆发</span></div><div class="desc">暖色法袍与火焰符号，适合暴击与爆裂定位。</div></div><div class="card"><img src="../assets/generated/heroes/frost_oracle.svg" alt="霜语先知" /><div class="label"><strong>霜语先知</strong><span>冰霜 / 控制</span></div><div class="desc">冷色法冠与十字冰徽，强化冻结识别。</div></div><div class="card"><img src="../assets/generated/heroes/tide_guard.svg" alt="潮汐卫士" /><div class="label"><strong>潮汐卫士</strong><span>海潮 / 前排</span></div><div class="desc">海潮守卫版本，前排辨识比共用冰法图更明确。</div></div><div class="card"><img src="../assets/generated/heroes/blade_dancer.svg" alt="刃舞者" /><div class="label"><strong>刃舞者</strong><span>斩击 / 连击</span></div><div class="desc">暖金与酒红配色，速度感和处决感更强。</div></div><div class="card"><img src="../assets/generated/heroes/venom_sage.svg" alt="蚀毒贤者" /><div class="label"><strong>蚀毒贤者</strong><span>毒性 / 持续</span></div><div class="desc">草木药剂系配色，适合持续伤害。</div></div><div class="card"><img src="../assets/generated/heroes/storm_caller.svg" alt="风暴召唤师" /><div class="label"><strong>风暴召唤师</strong><span>风雷 / 范围</span></div><div class="desc">紫电高光更适合连锁和群体法术。</div></div><div class="card"><img src="../assets/generated/heroes/iron_warden.svg" alt="铁壁守卫" /><div class="label"><strong>铁壁守卫</strong><span>护甲 / 坦克</span></div><div class="desc">金属灰护甲版本，和火系近战区分开。</div></div><div class="card"><img src="../assets/generated/heroes/solar_priest.svg" alt="曜光祭司" /><div class="label"><strong>曜光祭司</strong><span>圣辉 / 穿透</span></div><div class="desc">金白圣辉版本，适合神圣与充能联动。</div></div></div>
+</section>
+<section class="section">
+<h2>敌人图标</h2>
+<p>12 个敌人和首领已拆成一对一资源，并对精英与 Boss 的轮廓做了进一步强化。</p>
+<div class="grid"><div class="card"><img src="../assets/generated/enemies/slime.svg" alt="岩壳史莱姆" /><div class="label"><strong>岩壳史莱姆</strong><span>杂兵</span></div><div class="desc">圆润、低威胁感，适合作为首波基准敌人。</div></div><div class="card"><img src="../assets/generated/enemies/scout.svg" alt="尖刺斥候" /><div class="label"><strong>尖刺斥候</strong><span>快速</span></div><div class="desc">暖色飞行侦察单位，速度感更强。</div></div><div class="card"><img src="../assets/generated/enemies/shell.svg" alt="壳甲守卫" /><div class="label"><strong>壳甲守卫</strong><span>护甲</span></div><div class="desc">重壳配色更适合护甲单位。</div></div><div class="card"><img src="../assets/generated/enemies/mender.svg" alt="巢群医者" /><div class="label"><strong>巢群医者</strong><span>治疗</span></div><div class="desc">头部治疗标记更醒目，支援识别更直接。</div></div><div class="card"><img src="../assets/generated/enemies/spitter.svg" alt="酸液喷吐者" /><div class="label"><strong>酸液喷吐者</strong><span>远程</span></div><div class="desc">口器和毒泡更适合远程喷吐感。</div></div><div class="card"><img src="../assets/generated/enemies/crusher.svg" alt="裂隙粉碎者" /><div class="label"><strong>裂隙粉碎者</strong><span>精英</span></div><div class="desc">重型轮廓和大槌标识更有威胁感。</div></div><div class="card"><img src="../assets/generated/enemies/phantom.svg" alt="相位幽灵" /><div class="label"><strong>相位幽灵</strong><span>相位</span></div><div class="desc">幽紫幽灵风格，和飞行侦察区分开。</div></div><div class="card"><img src="../assets/generated/enemies/healer.svg" alt="灵能医师" /><div class="label"><strong>灵能医师</strong><span>支援</span></div><div class="desc">柔和支援系配色，用于后排治疗单位。</div></div><div class="card"><img src="../assets/generated/enemies/juggernaut.svg" alt="铁甲巨兽" /><div class="label"><strong>铁甲巨兽</strong><span>重装精英</span></div><div class="desc">深铁灰版本，重型感更强。</div></div><div class="card"><img src="../assets/generated/enemies/wyrm_boss.svg" alt="潮汐巨龙" /><div class="label"><strong>潮汐巨龙</strong><span>Boss</span></div><div class="desc">蓝色首领版，直接拉开首领层级。</div></div><div class="card"><img src="../assets/generated/enemies/lich_boss.svg" alt="霜魂巫妖" /><div class="label"><strong>霜魂巫妖</strong><span>Boss</span></div><div class="desc">冷白幽魂版，法系首领识别更直接。</div></div><div class="card"><img src="../assets/generated/enemies/forge_boss.svg" alt="熔炉典狱官" /><div class="label"><strong>熔炉典狱官</strong><span>Boss</span></div><div class="desc">熔炉暖色版，终局压迫感更强。</div></div></div>
+</section>
 
-    <section class="section">
-      <h2>英雄图标</h2>
-      <p>四个英雄头像采用统一外轮廓、统一描边和不同元素标识，适合卡牌、部署格、头像框和底部操作区。</p>
-      <div class="grid">
-        <div class="card"><img src="../assets/generated/heroes/frost_oracle.svg" alt="霜语先知" /><div class="label"><strong>霜语先知</strong><span>控制 / 冰霜</span></div><div class="desc">冷色高光、十字冰纹、柔和脸部比例，适合作为法系控制英雄。</div></div>
-        <div class="card"><img src="../assets/generated/heroes/ember_knight.svg" alt="余烬骑士" /><div class="label"><strong>余烬骑士</strong><span>爆发 / 火焰</span></div><div class="desc">暖色铠甲和光刃造型，适合作为前排近战或高爆发近卫。</div></div>
-        <div class="card"><img src="../assets/generated/heroes/grove_alchemist.svg" alt="林沼药师" /><div class="label"><strong>林沼药师</strong><span>持续 / 毒性</span></div><div class="desc">药剂徽记明显，整体更亲和，适合毒伤或辅助系单位。</div></div>
-        <div class="card"><img src="../assets/generated/heroes/storm_ranger.svg" alt="风暴游侠" /><div class="label"><strong>风暴游侠</strong><span>远程 / 电击</span></div><div class="desc">星形电矢图形更利于远程职业识别，适合速射和链击。</div></div>
-      </div>
-    </section>
-
-    <section class="section">
-      <h2>敌人图标</h2>
-      <p>敌人风格偏可爱反派，保留邪性但避免写实恐怖，更适合休闲塔防项目的整体气质。</p>
-      <div class="grid">
-        <div class="card"><img src="../assets/generated/enemies/shadow_batling.svg" alt="影翼蝠灵" /><div class="label"><strong>影翼蝠灵</strong><span>飞行 / 干扰</span></div><div class="desc">夸张翅膀和亮色面部让它在战场里更易辨认，适合飞行杂兵。</div></div>
-        <div class="card"><img src="../assets/generated/enemies/bog_spiderling.svg" alt="沼泽蛛幼" /><div class="label"><strong>沼泽蛛幼</strong><span>地面 / 中毒</span></div><div class="desc">圆壳和多足做成卡通化处理，保留毒物属性但不过分压迫。</div></div>
-      </div>
-    </section>
-
-    <section class="section wide">
-      <h2>地图背景</h2>
-      <p>背景延续你当前参考图的“中央路径 + 两侧环境包裹”逻辑，但适配桌面横屏和横向部署带。</p>
-      <div class="grid">
-        <div class="card wide"><img src="../assets/generated/backgrounds/whimsy_forest_lane.svg" alt="幽林路径背景" /><div class="label"><strong>幽林路径</strong><span>1600 x 900</span></div><div class="desc">中路推进、两侧林地包边、底部核心平台可直接作为战斗主场景概念底图。</div></div>
-      </div>
-    </section>
-
-    <section class="section">
-      <h2>打击与技能特效</h2>
-      <p>特效优先考虑战场信息反馈，适合叠在单位上方或命中点，不会遮挡过多地图。</p>
-      <div class="grid">
-        <div class="card"><img src="../assets/generated/effects/frost_beam.svg" alt="寒霜射线" /><div class="label"><strong>寒霜射线</strong><span>线性锁定</span></div><div class="desc">适合冰法、图腾射线、减速链路等持续攻击效果。</div></div>
-        <div class="card"><img src="../assets/generated/effects/arcane_burst.svg" alt="奥术爆裂" /><div class="label"><strong>奥术爆裂</strong><span>范围命中</span></div><div class="desc">适合爆炸、火焰、法球命中的瞬时大反馈。</div></div>
-        <div class="card"><img src="../assets/generated/effects/impact_spark.svg" alt="命中火花" /><div class="label"><strong>命中火花</strong><span>单体命中</span></div><div class="desc">适合普攻、暴击、短时电弧，做命中层会很清楚。</div></div>
-        <div class="card"><img src="../assets/generated/effects/freeze_ring.svg" alt="冻结光环" /><div class="label"><strong>冻结光环</strong><span>控制区域</span></div><div class="desc">适合冻结、减速、结界、站位圈等地面型提示。</div></div>
-      </div>
-    </section>
-  </div>
+<section class="section">
+<h2>图腾图标</h2>
+<p>三种核心图腾也已经纳入统一美术体系，并接入了右侧图腾信息卡。</p>
+<div class="grid">
+<div class="card"><img src="../assets/generated/totems/poison_totem.svg" alt="毒系图腾" /><div class="label"><strong>毒系图腾</strong><span>持续</span></div><div class="desc">更适合中毒充能和腐蚀主题。</div></div>
+<div class="card"><img src="../assets/generated/totems/crit_totem.svg" alt="暴击图腾" /><div class="label"><strong>暴击图腾</strong><span>爆发</span></div><div class="desc">高亮星徽，适合暴击与增幅主题。</div></div>
+<div class="card"><img src="../assets/generated/totems/frost_totem.svg" alt="冰冻图腾" /><div class="label"><strong>冰冻图腾</strong><span>控制</span></div><div class="desc">冰纹轮廓更适合冻结和减速主题。</div></div>
+</div>
+</section>
+<section class="section wide">
+<h2>地图背景</h2>
+<p>保留横屏桌面战场结构，补充薄暮版本，后续可以按章节或关卡主题切换。</p>
+<div class="grid">
+<div class="card wide"><img src="../assets/generated/backgrounds/whimsy_forest_lane.svg" alt="幽林路径-白昼" /><div class="label"><strong>幽林路径</strong><span>白昼</span></div><div class="desc">当前主战场底图，中央路径清晰，两侧环境收边较轻。</div></div>
+<div class="card wide"><img src="../assets/generated/backgrounds/whimsy_forest_lane_twilight.svg" alt="幽林路径-薄暮" /><div class="label"><strong>幽林路径</strong><span>薄暮</span></div><div class="desc">薄暮版背景更适合高章节点或剧情战。</div></div>
+</div>
+</section>
+<section class="section">
+<h2>战斗特效增强包</h2>
+<p>这轮除了重画原有四类命中特效，还补上了毒雾、圣辉和雷链三类资源。现有项目仍可继续沿用原来的四个命中特效，不需要改动逻辑。</p>
+<div class="grid"><div class="card"><img src="../assets/generated/effects/frost_beam.svg" alt="寒霜射线" /><div class="label"><strong>寒霜射线</strong><span>锁定</span></div><div class="desc">冰系持续伤害与减速。</div></div><div class="card"><img src="../assets/generated/effects/arcane_burst.svg" alt="奥术爆裂" /><div class="label"><strong>奥术爆裂</strong><span>范围</span></div><div class="desc">爆裂命中和暴击反馈。</div></div><div class="card"><img src="../assets/generated/effects/impact_spark.svg" alt="命中火花" /><div class="label"><strong>命中火花</strong><span>普攻</span></div><div class="desc">短促命中反馈，适合通用普攻。</div></div><div class="card"><img src="../assets/generated/effects/freeze_ring.svg" alt="冻结光环" /><div class="label"><strong>冻结光环</strong><span>控制</span></div><div class="desc">冻结与站位提示。</div></div><div class="card"><img src="../assets/generated/effects/venom_cloud.svg" alt="毒雾扩散" /><div class="label"><strong>毒雾扩散</strong><span>持续</span></div><div class="desc">适合中毒、腐蚀和范围型持续伤害。</div></div><div class="card"><img src="../assets/generated/effects/solar_flare.svg" alt="圣辉爆闪" /><div class="label"><strong>圣辉爆闪</strong><span>神圣</span></div><div class="desc">适合神圣命中、充能爆发和祝福类攻击。</div></div><div class="card"><img src="../assets/generated/effects/chain_arc.svg" alt="雷链弹射" /><div class="label"><strong>雷链弹射</strong><span>连锁</span></div><div class="desc">适合风暴召唤师、雷电链击和弹射反馈。</div></div></div>
+</section>
+</div>
 </body>
 </html>

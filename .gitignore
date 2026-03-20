@@ -3,3 +3,5 @@
 .export/
 *.tmp
 *.import
+.codex-backup/
+.codex-tmp/

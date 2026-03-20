@@ -25,29 +25,41 @@ var _name_label: Label
 var _hp_fill: ColorRect
 
 func _ready() -> void:
-	custom_minimum_size = Vector2(84, 92)
-	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	custom_minimum_size = Vector2(88, 86)
+	mouse_filter = Control.MOUSE_FILTER_PASS
+	clip_contents = true
+	tooltip_text = ""
+
 	var margin := MarginContainer.new()
 	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	margin.add_theme_constant_override("margin_left", 5)
-	margin.add_theme_constant_override("margin_top", 4)
-	margin.add_theme_constant_override("margin_right", 5)
-	margin.add_theme_constant_override("margin_bottom", 4)
+	margin.add_theme_constant_override("margin_left", 3)
+	margin.add_theme_constant_override("margin_top", 3)
+	margin.add_theme_constant_override("margin_right", 3)
+	margin.add_theme_constant_override("margin_bottom", 3)
 	add_child(margin)
+
 	var box := VBoxContainer.new()
 	box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	box.alignment = BoxContainer.ALIGNMENT_CENTER
-	box.add_theme_constant_override("separation", 4)
+	box.add_theme_constant_override("separation", 2)
 	margin.add_child(box)
+
 	_icon = IconBadge.new()
-	_icon.custom_minimum_size = Vector2(56, 56)
+	_icon.custom_minimum_size = Vector2(72, 72)
+	_icon.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_icon.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	box.add_child(_icon)
+
 	_name_label = Label.new()
-	_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_name_label.add_theme_font_size_override("font_size", 11)
+	_name_label.visible = false
 	box.add_child(_name_label)
+
+	var hp_wrap := CenterContainer.new()
+	hp_wrap.custom_minimum_size = Vector2(0, 8)
+	box.add_child(hp_wrap)
+
 	var hp_frame := PanelContainer.new()
-	hp_frame.custom_minimum_size = Vector2(56, 8)
+	hp_frame.custom_minimum_size = Vector2(64, 8)
 	var hp_style := StyleBoxFlat.new()
 	hp_style.bg_color = Color(1, 1, 1, 0.14)
 	hp_style.corner_radius_top_left = 999
@@ -55,7 +67,8 @@ func _ready() -> void:
 	hp_style.corner_radius_bottom_left = 999
 	hp_style.corner_radius_bottom_right = 999
 	hp_frame.add_theme_stylebox_override("panel", hp_style)
-	box.add_child(hp_frame)
+	hp_wrap.add_child(hp_frame)
+
 	var hp_root := Control.new()
 	hp_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	hp_frame.add_child(hp_root)
@@ -64,6 +77,7 @@ func _ready() -> void:
 	_hp_fill.anchor_bottom = 1.0
 	_hp_fill.color = Color("7be26e")
 	hp_root.add_child(_hp_fill)
+
 	_update_visuals()
 
 func setup(in_enemy_def, hp_scale: float, speed_scale: float, reward_bonus: int = 0) -> void:
@@ -131,6 +145,7 @@ func _update_visuals() -> void:
 		if localized_enemy != null:
 			display_name = str(localized_enemy.display_name)
 	_name_label.text = _short_name(display_name)
+	tooltip_text = display_name
 	_hp_fill.anchor_right = clampf(get_health_ratio(), 0.0, 1.0)
 	_hp_fill.color = Color("8ddf73") if freeze_time <= 0.0 else Color("84d7ff")
 	var base_color: Color = Color("7a1c1c")

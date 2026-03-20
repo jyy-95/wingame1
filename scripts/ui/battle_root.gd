@@ -18,6 +18,10 @@ const MAX_LOG_LINES := 14
 const TOTEM_BASE_COST := 60
 const TOTEM_COST_STEP := 20
 const BOARD_BASE_SIZE := Vector2(1600, 900)
+const DEPLOY_PANEL_TOP := 588.0
+const DEPLOY_PANEL_BOTTOM_GAP := 8.0
+const BOTTOM_BAR_HEIGHT := 60.0
+const BOTTOM_BAR_BOTTOM_MARGIN := 18.0
 
 var run_state: RunState
 var economy_system := SummonEconomySystem.new()
@@ -400,76 +404,77 @@ func _build_battlefield(shell: Control) -> void:
 	_update_lane_guides()
 func _build_bottom(shell: Control) -> void:
 	deploy_panel = PanelContainer.new()
-	deploy_panel.position = Vector2(150, 592)
-	deploy_panel.size = Vector2(1300, 168)
+	deploy_panel.position = Vector2(150, DEPLOY_PANEL_TOP)
+	deploy_panel.size = Vector2(1300, BOARD_BASE_SIZE.y - BOTTOM_BAR_HEIGHT - BOTTOM_BAR_BOTTOM_MARGIN - DEPLOY_PANEL_TOP - DEPLOY_PANEL_BOTTOM_GAP)
 	deploy_panel.add_theme_stylebox_override("panel", _make_surface_style(Color("556575"), Color("d9ebf4"), 30))
 	shell.add_child(deploy_panel)
-	var deploy_box := _make_panel_box(deploy_panel, 16)
+	var deploy_box := _make_panel_box(deploy_panel, 10)
 	var deploy_head := HBoxContainer.new()
-	deploy_head.add_theme_constant_override("separation", 12)
+	deploy_head.add_theme_constant_override("separation", 6)
 	deploy_box.add_child(deploy_head)
 	var deploy_meta := VBoxContainer.new()
 	deploy_meta.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	deploy_meta.add_theme_constant_override("separation", 4)
+	deploy_meta.add_theme_constant_override("separation", 1)
 	deploy_head.add_child(deploy_meta)
 	deploy_title_label = Label.new()
-	deploy_title_label.add_theme_font_size_override("font_size", 18)
+	deploy_title_label.add_theme_font_size_override("font_size", 15)
 	deploy_meta.add_child(deploy_title_label)
 	random_hint_label = Label.new()
 	random_hint_label.add_theme_color_override("font_color", Color("d9e8f0"))
 	random_hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	random_hint_label.add_theme_font_size_override("font_size", 12)
+	random_hint_label.add_theme_font_size_override("font_size", 10)
 	deploy_meta.add_child(random_hint_label)
 	deploy_hint_label = Label.new()
 	deploy_hint_label.add_theme_color_override("font_color", Color("edf6fb"))
-	deploy_hint_label.add_theme_font_size_override("font_size", 13)
+	deploy_hint_label.add_theme_font_size_override("font_size", 11)
 	deploy_head.add_child(deploy_hint_label)
 	board_grid = GridContainer.new()
 	board_grid.columns = 10
 	board_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	board_grid.add_theme_constant_override("h_separation", 10)
-	board_grid.add_theme_constant_override("v_separation", 10)
+	board_grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	board_grid.add_theme_constant_override("h_separation", 6)
+	board_grid.add_theme_constant_override("v_separation", 6)
 	deploy_box.add_child(board_grid)
 	board_manager.setup(board_grid, self)
 
 	bottom_bar = HBoxContainer.new()
-	bottom_bar.position = Vector2(150, 784)
-	bottom_bar.size = Vector2(1300, 82)
-	bottom_bar.add_theme_constant_override("separation", 12)
+	bottom_bar.size = Vector2(1300, BOTTOM_BAR_HEIGHT)
+	bottom_bar.position = Vector2(150, BOARD_BASE_SIZE.y - bottom_bar.size.y - BOTTOM_BAR_BOTTOM_MARGIN)
+	bottom_bar.add_theme_constant_override("separation", 10)
 	shell.add_child(bottom_bar)
 	money_panel = PanelContainer.new()
-	money_panel.custom_minimum_size = Vector2(205, 82)
+	money_panel.custom_minimum_size = Vector2(178, 60)
 	money_panel.add_theme_stylebox_override("panel", _make_surface_style(Color("efe3d1"), Color("fff8ef"), 20))
 	bottom_bar.add_child(money_panel)
-	var money_box := _make_panel_box(money_panel, 14)
+	var money_box := _make_panel_box(money_panel, 8)
 	var money_caption := Label.new()
 	money_caption.set_meta("copy_key", "gold_label")
 	money_caption.add_theme_color_override("font_color", Color("687a86"))
-	money_caption.add_theme_font_size_override("font_size", 11)
+	money_caption.add_theme_font_size_override("font_size", 9)
 	money_box.add_child(money_caption)
 	gold_value_label = Label.new()
-	gold_value_label.add_theme_font_size_override("font_size", 30)
+	gold_value_label.add_theme_font_size_override("font_size", 22)
 	gold_value_label.add_theme_color_override("font_color", Color("1c3749"))
 	money_box.add_child(gold_value_label)
 	summon_cost_label = Label.new()
 	summon_cost_label.add_theme_color_override("font_color", Color("6f8190"))
-	summon_cost_label.add_theme_font_size_override("font_size", 13)
+	summon_cost_label.add_theme_font_size_override("font_size", 10)
 	money_box.add_child(summon_cost_label)
 
 	core_panel = PanelContainer.new()
-	core_panel.custom_minimum_size = Vector2(693, 82)
+	core_panel.custom_minimum_size = Vector2(730, 60)
 	core_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	core_panel.add_theme_stylebox_override("panel", _make_surface_style(Color("152534"), Color("9bc4db"), 20))
 	bottom_bar.add_child(core_panel)
-	var core_box := _make_panel_box(core_panel, 14)
+	var core_box := _make_panel_box(core_panel, 8)
 	core_meta_label = Label.new()
-	core_meta_label.add_theme_font_size_override("font_size", 14)
+	core_meta_label.add_theme_font_size_override("font_size", 13)
 	core_box.add_child(core_meta_label)
 	core_value_label = Label.new()
-	core_value_label.add_theme_font_size_override("font_size", 22)
+	core_value_label.add_theme_font_size_override("font_size", 1)
 	core_box.add_child(core_value_label)
 	var core_bar_frame := PanelContainer.new()
-	core_bar_frame.custom_minimum_size = Vector2(0, 18)
+	core_bar_frame.custom_minimum_size = Vector2(0, 12)
 	core_bar_frame.add_theme_stylebox_override("panel", _make_surface_style(Color(1, 1, 1, 0.10), Color(1, 1, 1, 0.06), 999))
 	core_box.add_child(core_bar_frame)
 	var core_fill_root := Control.new()
@@ -482,17 +487,17 @@ func _build_bottom(shell: Control) -> void:
 	core_fill_root.add_child(core_fill)
 
 	actions_panel = PanelContainer.new()
-	actions_panel.custom_minimum_size = Vector2(390, 82)
+	actions_panel.custom_minimum_size = Vector2(356, 60)
 	actions_panel.size_flags_horizontal = Control.SIZE_SHRINK_END
 	actions_panel.add_theme_stylebox_override("panel", _make_surface_style(Color("152534"), Color("9bc4db"), 20))
 	bottom_bar.add_child(actions_panel)
 	var actions_box := HBoxContainer.new()
 	actions_box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	actions_box.offset_left = 10
-	actions_box.offset_top = 10
-	actions_box.offset_right = -10
-	actions_box.offset_bottom = -10
-	actions_box.add_theme_constant_override("separation", 10)
+	actions_box.offset_left = 6
+	actions_box.offset_top = 6
+	actions_box.offset_right = -6
+	actions_box.offset_bottom = -6
+	actions_box.add_theme_constant_override("separation", 6)
 	actions_panel.add_child(actions_box)
 	totem_button = Button.new()
 	totem_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -562,10 +567,10 @@ func _apply_responsive_layout() -> void:
 	log_panel.size = Vector2(302, 286)
 	battlefield_frame.position = Vector2(180, 150)
 	battlefield_frame.size = Vector2(1240, 430)
-	deploy_panel.position = Vector2(150, 598)
-	deploy_panel.size = Vector2(1300, 174)
-	bottom_bar.position = Vector2(150, 794)
-	bottom_bar.size = Vector2(1300, 88)
+	deploy_panel.position = Vector2(150, DEPLOY_PANEL_TOP)
+	deploy_panel.size = Vector2(1300, BOARD_BASE_SIZE.y - BOTTOM_BAR_HEIGHT - BOTTOM_BAR_BOTTOM_MARGIN - DEPLOY_PANEL_TOP - DEPLOY_PANEL_BOTTOM_GAP)
+	bottom_bar.size = Vector2(1300, BOTTOM_BAR_HEIGHT)
+	bottom_bar.position = Vector2(150, BOARD_BASE_SIZE.y - bottom_bar.size.y - BOTTOM_BAR_BOTTOM_MARGIN)
 	effect_layer.position = Vector2.ZERO
 	effect_layer.size = BOARD_BASE_SIZE
 	_update_lane_guides()
@@ -1099,8 +1104,9 @@ func _refresh_status_panels() -> void:
 	trait_badge_label.text = Localization.format_text("trait_badge", [_get_active_trait_count()])
 	gold_value_label.text = str(run_state.gold)
 	summon_cost_label.text = Localization.format_text("summon_cost", [economy_system.current_cost(run_state)])
-	core_meta_label.text = Localization.format_text("core_status", [run_state.totem_level, _get_totem_upgrade_cost()])
-	core_value_label.text = "%d / %d" % [run_state.base_hp, run_state.max_base_hp]
+	core_meta_label.text = "%s    %d / %d" % [Localization.format_text("core_status", [run_state.totem_level, _get_totem_upgrade_cost()]), run_state.base_hp, run_state.max_base_hp]
+	core_value_label.text = ""
+	core_value_label.visible = false
 	core_fill.anchor_right = clampf(float(run_state.base_hp) / maxf(1.0, float(run_state.max_base_hp)), 0.0, 1.0)
 	random_hint_label.text = Localization.format_text("random_hero_hint", [_format_random_hint()])
 	wave_status_label.text = Localization.format_text("wave_line", [maxi(0, run_state.current_wave_index + 1), current_stage.wave_defs.size(), get_active_enemy_count()])
@@ -1117,7 +1123,11 @@ func _refresh_rich_panels() -> void:
 		totem_desc_label.clear()
 		totem_desc_label.append_text(totem.description)
 		totem_charge_label.text = _describe_totem_charge(totem)
-		_apply_palette(totem_icon, Color(totem.color), "totem")
+		var totem_texture := ArtCatalog.get_totem_texture(totem.id)
+		if totem_texture != null:
+			totem_icon.configure_with_texture(totem_texture, Color(totem.color))
+		else:
+			_apply_palette(totem_icon, Color(totem.color), "totem")
 	else:
 		totem_name_label.text = Localization.text("totem_none")
 		totem_desc_label.clear()
@@ -1167,17 +1177,31 @@ func show_hit_feedback(piece, enemy, dealt: float, meta: Dictionary) -> void:
 	var start := _to_effect_local(piece.get_global_rect().get_center())
 	var finish := _to_effect_local(enemy.get_global_rect().get_center())
 	var color: Color = piece.hero_def.color.lightened(0.18) if piece.hero_def != null else Color("89d8ff")
-	_spawn_beam(start, finish, color)
-	if str(meta.get("mode", "single")) == "splash":
-		_spawn_burst(finish, color)
-	else:
-		_spawn_burst(finish, color.lightened(0.18), 20.0)
+	var hero_id := str(piece.hero_def.id) if piece.hero_def != null else ""
+	var beam_effect := ""
+	if hero_id == "storm_caller":
+		beam_effect = "chain_arc"
+	elif hero_id == "frost_oracle" or bool(meta.get("freeze", false)):
+		beam_effect = "frost_beam"
+	_spawn_beam(start, finish, color, beam_effect)
+
+	var burst_effect := "impact_spark"
+	if bool(meta.get("poison", false)) or hero_id == "venom_sage":
+		burst_effect = "venom_cloud"
+	elif hero_id == "solar_priest":
+		burst_effect = "solar_flare"
+	elif bool(meta.get("crit", false)) or str(meta.get("mode", "single")) == "splash":
+		burst_effect = "arcane_burst"
+	_spawn_burst(finish, color, 42.0 if str(meta.get("mode", "single")) != "splash" else 56.0, burst_effect)
+
 	if bool(meta.get("freeze", false)):
-		_spawn_ring(finish, Color("82d8ff"))
+		_spawn_ring(finish, Color("82d8ff"), 92.0, "freeze_ring")
 	elif bool(meta.get("poison", false)):
-		_spawn_ring(finish, Color("89dc9a"), 54.0)
+		_spawn_ring(finish, Color("89dc9a"), 96.0, "venom_cloud")
+
 	if bool(meta.get("crit", false)):
-		_spawn_spark(finish, Color("ffdc7a"))
+		var spark_effect := "solar_flare" if hero_id == "solar_priest" else "impact_spark"
+		_spawn_spark(finish, Color("ffdc7a"), spark_effect)
 	_spawn_damage_number(finish, dealt, bool(meta.get("crit", false)))
 
 func _toggle_speed() -> void:
@@ -1241,22 +1265,26 @@ func _to_effect_local(global_point: Vector2) -> Vector2:
 	var transform_scale := effect_layer.get_global_transform_with_canvas().get_scale()
 	return Vector2((global_point.x - effect_rect.position.x) / maxf(transform_scale.x, 0.001), (global_point.y - effect_rect.position.y) / maxf(transform_scale.y, 0.001))
 
-func _spawn_beam(start: Vector2, finish: Vector2, color: Color) -> void:
+func _spawn_beam(start: Vector2, finish: Vector2, color: Color, effect_id: String = "") -> void:
+	var distance := start.distance_to(finish)
+	if effect_id != "" and _spawn_effect_sprite((start + finish) * 0.5, Vector2(distance, 52), effect_id, Color.WHITE, start.angle_to_point(finish), 0.34, Vector2(1.0, 0.92), Vector2(1.08, 1.02)):
+		return
 	var beam := ColorRect.new()
 	beam.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	beam.color = Color(color.r, color.g, color.b, 0.9)
-	var distance := start.distance_to(finish)
 	beam.size = Vector2(distance, 5)
 	beam.pivot_offset = Vector2(0, 2.5)
 	beam.position = start - Vector2(0, 2.5)
 	beam.rotation = start.angle_to_point(finish)
 	effect_layer.add_child(beam)
 	var tween := create_tween()
-	tween.parallel().tween_property(beam, "modulate:a", 0.0, 0.22)
-	tween.parallel().tween_property(beam, "scale:x", 1.08, 0.22)
+	tween.parallel().tween_property(beam, "modulate:a", 0.0, 0.32)
+	tween.parallel().tween_property(beam, "scale:x", 1.14, 0.32)
 	tween.finished.connect(beam.queue_free)
 
-func _spawn_burst(center: Vector2, color: Color, radius: float = 28.0) -> void:
+func _spawn_burst(center: Vector2, color: Color, radius: float = 28.0, effect_id: String = "") -> void:
+	if effect_id != "" and _spawn_effect_sprite(center, Vector2.ONE * radius * 2.5, effect_id, Color.WHITE, 0.0, 0.34, Vector2(0.72, 0.72), Vector2(1.28, 1.28)):
+		return
 	var burst := PanelContainer.new()
 	burst.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	burst.position = center - Vector2.ONE * (radius * 0.5)
@@ -1271,11 +1299,13 @@ func _spawn_burst(center: Vector2, color: Color, radius: float = 28.0) -> void:
 	effect_layer.add_child(burst)
 	burst.scale = Vector2(0.55, 0.55)
 	var tween := create_tween()
-	tween.parallel().tween_property(burst, "scale", Vector2(1.25, 1.25), 0.20)
-	tween.parallel().tween_property(burst, "modulate:a", 0.0, 0.20)
+	tween.parallel().tween_property(burst, "scale", Vector2(1.38, 1.38), 0.30)
+	tween.parallel().tween_property(burst, "modulate:a", 0.0, 0.30)
 	tween.finished.connect(burst.queue_free)
 
-func _spawn_ring(center: Vector2, color: Color, radius: float = 70.0) -> void:
+func _spawn_ring(center: Vector2, color: Color, radius: float = 70.0, effect_id: String = "") -> void:
+	if effect_id != "" and _spawn_effect_sprite(center, Vector2.ONE * radius * 1.18, effect_id, Color.WHITE, 0.0, 0.42, Vector2(0.62, 0.62), Vector2(1.16, 1.16)):
+		return
 	var ring := PanelContainer.new()
 	ring.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ring.position = center - Vector2.ONE * (radius * 0.5)
@@ -1295,11 +1325,13 @@ func _spawn_ring(center: Vector2, color: Color, radius: float = 70.0) -> void:
 	effect_layer.add_child(ring)
 	ring.scale = Vector2(0.45, 0.45)
 	var tween := create_tween()
-	tween.parallel().tween_property(ring, "scale", Vector2(1.05, 1.05), 0.28)
-	tween.parallel().tween_property(ring, "modulate:a", 0.0, 0.28)
+	tween.parallel().tween_property(ring, "scale", Vector2(1.16, 1.16), 0.38)
+	tween.parallel().tween_property(ring, "modulate:a", 0.0, 0.38)
 	tween.finished.connect(ring.queue_free)
 
-func _spawn_spark(center: Vector2, color: Color) -> void:
+func _spawn_spark(center: Vector2, color: Color, effect_id: String = "impact_spark") -> void:
+	if effect_id != "" and _spawn_effect_sprite(center, Vector2(54, 54), effect_id, Color.WHITE, PI * 0.08, 0.28, Vector2(0.82, 0.82), Vector2(1.45, 1.45)):
+		return
 	var spark := ColorRect.new()
 	spark.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	spark.color = color
@@ -1309,9 +1341,31 @@ func _spawn_spark(center: Vector2, color: Color) -> void:
 	spark.pivot_offset = Vector2(9, 9)
 	effect_layer.add_child(spark)
 	var tween := create_tween()
-	tween.parallel().tween_property(spark, "scale", Vector2(1.8, 1.8), 0.18)
-	tween.parallel().tween_property(spark, "modulate:a", 0.0, 0.18)
+	tween.parallel().tween_property(spark, "scale", Vector2(2.1, 2.1), 0.26)
+	tween.parallel().tween_property(spark, "modulate:a", 0.0, 0.26)
 	tween.finished.connect(spark.queue_free)
+
+func _spawn_effect_sprite(center: Vector2, size_value: Vector2, effect_id: String, tint: Color = Color.WHITE, rotation_value: float = 0.0, fade_time: float = 0.32, start_scale: Vector2 = Vector2.ONE, end_scale: Vector2 = Vector2.ONE) -> bool:
+	var texture := ArtCatalog.get_effect_texture(effect_id)
+	if texture == null:
+		return false
+	var sprite := TextureRect.new()
+	sprite.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	sprite.texture = texture
+	sprite.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	sprite.stretch_mode = TextureRect.STRETCH_SCALE
+	sprite.position = center - (size_value * 0.5)
+	sprite.size = size_value
+	sprite.pivot_offset = size_value * 0.5
+	sprite.rotation = rotation_value
+	sprite.modulate = tint
+	effect_layer.add_child(sprite)
+	sprite.scale = start_scale
+	var tween := create_tween()
+	tween.parallel().tween_property(sprite, "scale", end_scale, fade_time)
+	tween.parallel().tween_property(sprite, "modulate:a", 0.0, fade_time)
+	tween.finished.connect(sprite.queue_free)
+	return true
 
 func _spawn_damage_number(center: Vector2, dealt: float, did_crit: bool) -> void:
 	var label := Label.new()
@@ -1360,10 +1414,10 @@ func _make_quick_button(emblem: String) -> Button:
 	content.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	content.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	content.alignment = BoxContainer.ALIGNMENT_CENTER
-	content.add_theme_constant_override("separation", 6)
+	content.add_theme_constant_override("separation", 5)
 	button.add_child(content)
 	var icon := IconBadge.new()
-	icon.custom_minimum_size = Vector2(34, 34)
+	icon.custom_minimum_size = Vector2(24, 24)
 	icon.configure(Color("f3bc69"), Color("91562a"), Color("fff4d7"), "button", emblem)
 	content.add_child(icon)
 	var title := Label.new()
@@ -1380,22 +1434,22 @@ func _build_action_button(button: Button, emblem: String, primary: Color, second
 	button.add_theme_stylebox_override("hover", _make_button_style(primary.lightened(0.08), secondary.lightened(0.08), 18))
 	button.add_theme_stylebox_override("pressed", _make_button_style(primary.darkened(0.06), secondary.darkened(0.06), 18))
 	button.add_theme_color_override("font_color", Color("fff8ef"))
-	button.custom_minimum_size = Vector2(170, 64)
+	button.custom_minimum_size = Vector2(154, 46)
 	var content := HBoxContainer.new()
 	content.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	content.offset_left = 10
-	content.offset_top = 10
-	content.offset_right = -10
-	content.offset_bottom = -10
+	content.offset_left = 6
+	content.offset_top = 6
+	content.offset_right = -6
+	content.offset_bottom = -6
 	content.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	content.alignment = BoxContainer.ALIGNMENT_CENTER
-	content.add_theme_constant_override("separation", 8)
+	content.add_theme_constant_override("separation", 5)
 	button.add_child(content)
 	var icon_slot := CenterContainer.new()
-	icon_slot.custom_minimum_size = Vector2(40, 40)
+	icon_slot.custom_minimum_size = Vector2(28, 28)
 	content.add_child(icon_slot)
 	var icon := IconBadge.new()
-	icon.custom_minimum_size = Vector2(34, 34)
+	icon.custom_minimum_size = Vector2(24, 24)
 	icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	icon.configure(primary.lightened(0.1), secondary.darkened(0.05), Color("fff4dd"), "button", emblem)
@@ -1405,7 +1459,7 @@ func _build_action_button(button: Button, emblem: String, primary: Color, second
 	copy.alignment = BoxContainer.ALIGNMENT_CENTER
 	content.add_child(copy)
 	var title := Label.new()
-	title.add_theme_font_size_override("font_size", 15)
+	title.add_theme_font_size_override("font_size", 13)
 	copy.add_child(title)
 	var caption := Label.new()
 	caption.add_theme_font_size_override("font_size", 9)
@@ -1415,7 +1469,7 @@ func _build_action_button(button: Button, emblem: String, primary: Color, second
 	var cost := Label.new()
 	cost.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	cost.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	cost.add_theme_font_size_override("font_size", 17)
+	cost.add_theme_font_size_override("font_size", 14)
 	content.add_child(cost)
 	button.set_meta("title_label", title)
 	button.set_meta("caption_label", caption)

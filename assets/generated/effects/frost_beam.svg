@@ -1,15 +1,1 @@
-﻿<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <radialGradient id="glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(128 128) rotate(90) scale(94)">
-      <stop stop-color="#C6F8FF"/>
-      <stop offset="1" stop-color="#6ED6FF" stop-opacity="0"/>
-    </radialGradient>
-  </defs>
-  <circle cx="128" cy="128" r="94" fill="url(#glow)"/>
-  <path d="M48 128H208" stroke="#EFFFFF" stroke-width="22" stroke-linecap="round"/>
-  <path d="M60 128H196" stroke="#74D9FF" stroke-width="10" stroke-linecap="round"/>
-  <circle cx="56" cy="128" r="18" fill="#F6FFFF"/>
-  <circle cx="200" cy="128" r="16" fill="#B8EEFF"/>
-  <path d="M92 102L112 128L92 154" stroke="#E8FEFF" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M128 102L148 128L128 154" stroke="#CFF9FF" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#ebfcff"/><stop offset="45%" stop-color="#9ee9ff"/><stop offset="100%" stop-color="#55afff"/></linearGradient></defs><rect width="256" height="256" rx="48" fill="#19324a" fill-opacity=".04"/><path d="M36 128H220" stroke="url(#g)" stroke-width="24" stroke-linecap="round"/><path d="M46 128H210" stroke="#f8ffff" stroke-width="10" stroke-linecap="round" opacity=".95"/><circle cx="44" cy="128" r="24" fill="#dffaff" opacity=".85"/><circle cx="214" cy="128" r="28" fill="#8ad8ff" opacity=".78"/><path d="M84 100l14 16-14 16M120 92l18 20-18 20M162 104l12 14-12 14" stroke="#dfffff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" opacity=".92"/></svg>

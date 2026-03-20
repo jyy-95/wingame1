@@ -5,8 +5,8 @@ var board_manager
 var slot_index := -1
 
 func _ready() -> void:
-	custom_minimum_size = Vector2(120, 40)
-	mouse_filter = Control.MOUSE_FILTER_STOP
+	custom_minimum_size = Vector2(118, 30)
+	mouse_filter = Control.MOUSE_FILTER_PASS
 	_update_visual(false)
 
 func bind(in_board_manager, in_slot_index: int) -> void:

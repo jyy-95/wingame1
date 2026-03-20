@@ -1,15 +1,1 @@
-﻿<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <radialGradient id="ring" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(128 128) rotate(90) scale(96)">
-      <stop stop-color="#DDFEFF" stop-opacity="0.15"/>
-      <stop offset="1" stop-color="#8DE5FF" stop-opacity="0"/>
-    </radialGradient>
-  </defs>
-  <circle cx="128" cy="128" r="96" fill="url(#ring)"/>
-  <circle cx="128" cy="128" r="68" stroke="#D8FCFF" stroke-width="16"/>
-  <circle cx="128" cy="128" r="44" stroke="#8DE5FF" stroke-width="10" stroke-dasharray="12 16"/>
-  <path d="M128 38V66" stroke="#D8FCFF" stroke-width="10" stroke-linecap="round"/>
-  <path d="M128 190V218" stroke="#D8FCFF" stroke-width="10" stroke-linecap="round"/>
-  <path d="M38 128H66" stroke="#D8FCFF" stroke-width="10" stroke-linecap="round"/>
-  <path d="M190 128H218" stroke="#D8FCFF" stroke-width="10" stroke-linecap="round"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256"><defs><radialGradient id="g" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#f8ffff" stop-opacity="0"/><stop offset="70%" stop-color="#b9f2ff" stop-opacity=".18"/><stop offset="100%" stop-color="#76cbff" stop-opacity=".3"/></radialGradient></defs><rect width="256" height="256" rx="48" fill="#11283d" fill-opacity=".04"/><circle cx="128" cy="128" r="88" fill="url(#g)"/><circle cx="128" cy="128" r="82" stroke="#dfffff" stroke-width="10" opacity=".95"/><circle cx="128" cy="128" r="58" stroke="#8edfff" stroke-width="8" opacity=".75"/><path d="M128 46v22M128 188v22M46 128h22M188 128h22M72 72l16 16M168 168l16 16M184 72l-16 16M88 168l-16 16" stroke="#e9ffff" stroke-width="8" stroke-linecap="round" opacity=".9"/></svg>
