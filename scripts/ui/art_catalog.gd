@@ -1,15 +1,15 @@
-class_name ArtCatalog
+﻿class_name ArtCatalog
 extends RefCounted
 
 const HERO_TEXTURE_BY_ID := {
-	"ember_mage": "res://assets/generated/heroes/ember_mage.svg",
-	"frost_oracle": "res://assets/generated/heroes/frost_oracle.svg",
-	"tide_guard": "res://assets/generated/heroes/tide_guard.svg",
-	"blade_dancer": "res://assets/generated/heroes/blade_dancer.svg",
-	"venom_sage": "res://assets/generated/heroes/venom_sage.svg",
-	"storm_caller": "res://assets/generated/heroes/storm_caller.svg",
-	"iron_warden": "res://assets/generated/heroes/iron_warden.svg",
-	"solar_priest": "res://assets/generated/heroes/solar_priest.svg"
+	"ember_mage": "res://assets/generated/heroes/ember_mage.png",
+	"frost_oracle": "res://assets/generated/heroes/frost_oracle.png",
+	"tide_guard": "res://assets/generated/heroes/tide_guard.png",
+	"blade_dancer": "res://assets/generated/heroes/blade_dancer.png",
+	"venom_sage": "res://assets/generated/heroes/venom_sage.png",
+	"storm_caller": "res://assets/generated/heroes/storm_caller.png",
+	"iron_warden": "res://assets/generated/heroes/iron_warden.png",
+	"solar_priest": "res://assets/generated/heroes/solar_priest.png"
 }
 
 const ENEMY_TEXTURE_BY_ID := {
@@ -45,13 +45,10 @@ const EFFECT_TEXTURE_BY_ID := {
 }
 
 const BACKGROUND_BATTLEFIELD := "res://assets/generated/backgrounds/forge_hall_lane.png"
-const FALLBACK_HERO := "res://assets/generated/heroes/frost_oracle.svg"
+const FALLBACK_HERO := "res://assets/generated/heroes/frost_oracle.png"
 const FALLBACK_ENEMY := "res://assets/generated/enemies/scout.svg"
 const FALLBACK_EFFECT := "res://assets/generated/effects/impact_spark.svg"
-const HERO_ANIMATION_DIR_BY_ID := {
-	"blade_dancer": "res://assets/generated/heroes/blade_dancer_anim",
-	"iron_warden": "res://assets/generated/heroes/iron_warden_anim"
-}
+const HERO_ANIMATION_DIR_BY_ID := {}
 
 static var _texture_cache: Dictionary = {}
 static var _animation_cache: Dictionary = {}
@@ -119,5 +116,6 @@ static func _get_hero_animation_paths(hero_id: String) -> PackedStringArray:
 		paths.append("%s/%s" % [directory_path, file_name])
 	_animation_path_cache[hero_id] = paths
 	return paths
+
 
 
