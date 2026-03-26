@@ -21,7 +21,7 @@ var _star_label: Label
 var _star_badge: PanelContainer
 
 func _ready() -> void:
-	custom_minimum_size = Vector2(84, 44)
+	custom_minimum_size = Vector2(68, 82)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	clip_contents = true
 	tooltip_text = ""
@@ -214,11 +214,11 @@ func _update_visuals() -> void:
 	var hero_id: String = str(hero_def.id) if hero_def != null else ""
 	var animation_frames := ArtCatalog.get_hero_animation_frames(hero_id)
 	if not animation_frames.is_empty():
-		_icon.configure_with_animation(animation_frames, 12.0, base_color)
+		_icon.configure_with_animation(animation_frames, 12.0, base_color, hero_id)
 		return
 	var texture := ArtCatalog.get_hero_texture(hero_id)
 	if texture != null:
-		_icon.configure_with_texture(texture, base_color, true)
+		_icon.configure_with_texture(texture, base_color, true, hero_id)
 	else:
 		_icon.configure(base_color.lightened(0.18), base_color.darkened(0.24), Color("f5e4d1"), "avatar")
 

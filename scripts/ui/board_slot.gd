@@ -5,7 +5,7 @@ var board_manager
 var slot_index := -1
 
 func _ready() -> void:
-	custom_minimum_size = Vector2(118, 34)
+	custom_minimum_size = Vector2(68, 82)
 	mouse_filter = Control.MOUSE_FILTER_PASS
 	_update_visual(false)
 
@@ -36,20 +36,22 @@ func _notification(what: int) -> void:
 
 func _update_visual(filled: bool) -> void:
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color("314658") if not filled else Color("4f7087")
-	style.border_color = Color("d7e6ef") if filled else Color("9fc7de")
+	style.bg_color = Color("314658") if not filled else Color(0.20, 0.29, 0.37, 0.42)
+	style.border_color = Color(0.85, 0.90, 0.94, 0.26) if filled else Color("9fc7de")
 	style.border_width_left = 1
 	style.border_width_top = 1
 	style.border_width_right = 1
 	style.border_width_bottom = 1
-	style.corner_radius_top_left = 16
-	style.corner_radius_top_right = 16
-	style.corner_radius_bottom_left = 16
-	style.corner_radius_bottom_right = 16
+	style.corner_radius_top_left = 18
+	style.corner_radius_top_right = 18
+	style.corner_radius_bottom_left = 18
+	style.corner_radius_bottom_right = 18
 	style.shadow_color = Color(0, 0, 0, 0.18)
 	style.shadow_size = 6
 	style.shadow_offset = Vector2(0, 2)
 	style.anti_aliasing = true
 	style.anti_aliasing_size = 1.1
 	add_theme_stylebox_override("panel", style)
+
+
 

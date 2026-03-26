@@ -45,7 +45,7 @@ func _ready() -> void:
 	margin.add_child(box)
 
 	_icon = IconBadge.new()
-	_icon.custom_minimum_size = Vector2(74, 74)
+	_icon.custom_minimum_size = Vector2(31, 31)
 	_icon.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_icon.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	box.add_child(_icon)
@@ -181,3 +181,4 @@ func _short_name(text: String) -> String:
 	if Localization.is_chinese():
 		return text.substr(0, mini(4, text.length()))
 	return text.substr(0, mini(8, text.length()))
+

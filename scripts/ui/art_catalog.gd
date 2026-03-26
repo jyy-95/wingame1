@@ -44,15 +44,18 @@ const EFFECT_TEXTURE_BY_ID := {
 	"chain_arc": "res://assets/generated/effects/chain_arc.svg"
 }
 
-const BACKGROUND_BATTLEFIELD := "res://assets/generated/backgrounds/whimsy_forest_lane.svg"
+const BACKGROUND_BATTLEFIELD := "res://assets/generated/backgrounds/forge_hall_lane.png"
 const FALLBACK_HERO := "res://assets/generated/heroes/frost_oracle.svg"
 const FALLBACK_ENEMY := "res://assets/generated/enemies/scout.svg"
 const FALLBACK_EFFECT := "res://assets/generated/effects/impact_spark.svg"
-const BLADE_DANCER_FRAME_PREFIX := "res://assets/generated/heroes/blade_dancer_anim/5fff7784a703070a45a3511a9bdc2b0d_frame_"
-const BLADE_DANCER_FRAME_COUNT := 35
+const HERO_ANIMATION_DIR_BY_ID := {
+	"blade_dancer": "res://assets/generated/heroes/blade_dancer_anim",
+	"iron_warden": "res://assets/generated/heroes/iron_warden_anim"
+}
 
 static var _texture_cache: Dictionary = {}
 static var _animation_cache: Dictionary = {}
+static var _animation_path_cache: Dictionary = {}
 
 static func get_hero_texture(hero_id: String) -> Texture2D:
 	return _load_texture(HERO_TEXTURE_BY_ID.get(hero_id, FALLBACK_HERO))
@@ -90,9 +93,31 @@ static func _load_texture(path: String) -> Texture2D:
 	return _texture_cache[path] as Texture2D
 
 static func _get_hero_animation_paths(hero_id: String) -> PackedStringArray:
+	if _animation_path_cache.has(hero_id):
+		return _animation_path_cache[hero_id]
 	var paths := PackedStringArray()
-	match hero_id:
-		"blade_dancer":
-			for frame_index in range(1, BLADE_DANCER_FRAME_COUNT + 1):
-				paths.append("%s%06d.png" % [BLADE_DANCER_FRAME_PREFIX, frame_index])
+	var directory_path: String = HERO_ANIMATION_DIR_BY_ID.get(hero_id, "")
+	if directory_path.is_empty():
+		return paths
+	var directory := DirAccess.open(directory_path)
+	if directory == null:
+		return paths
+	var file_names: Array[String] = []
+	directory.list_dir_begin()
+	while true:
+		var file_name := directory.get_next()
+		if file_name.is_empty():
+			break
+		if directory.current_is_dir():
+			continue
+		if file_name.get_extension().to_lower() != "png":
+			continue
+		file_names.append(file_name)
+	directory.list_dir_end()
+	file_names.sort()
+	for file_name in file_names:
+		paths.append("%s/%s" % [directory_path, file_name])
+	_animation_path_cache[hero_id] = paths
 	return paths
+
+

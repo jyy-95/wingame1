@@ -20,8 +20,8 @@ const TOTEM_COST_STEP := 20
 const BOARD_BASE_SIZE := Vector2(1600, 900)
 const DEPLOY_PANEL_TOP := 588.0
 const DEPLOY_PANEL_BOTTOM_GAP := 8.0
-const BOTTOM_BAR_HEIGHT := 60.0
-const BOTTOM_BAR_BOTTOM_MARGIN := 18.0
+const BOTTOM_BAR_HEIGHT := 44.0
+const BOTTOM_BAR_BOTTOM_MARGIN := 26.0
 
 var run_state: RunState
 var economy_system := SummonEconomySystem.new()
@@ -87,9 +87,10 @@ var damage_label: RichTextLabel
 var log_label: RichTextLabel
 var enemy_layer: Control
 var effect_layer: Control
-var lane_guides: Array[PanelContainer] = []
+var lane_guides: Array[Control] = []
 var leak_line: ColorRect
 var board_grid: GridContainer
+var board_grid_wrap: Control
 var overlay: ColorRect
 var modal_title: Label
 var modal_subtitle: RichTextLabel
@@ -473,62 +474,16 @@ func _build_battlefield(shell: Control) -> void:
 	arena_background.texture = ArtCatalog.get_battlefield_background()
 	arena_background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	arena_background.stretch_mode = TextureRect.STRETCH_SCALE
-	arena_background.modulate = Color(1, 1, 1, 0.56)
+	arena_background.modulate = Color.WHITE
 	arena_back.add_child(arena_background)
-	var arena_spotlight := TextureRect.new()
-	arena_spotlight.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	arena_spotlight.texture = _make_radial_texture(
-		[Color(0.95, 0.98, 1.0, 0.24), Color(0.95, 0.98, 1.0, 0.0)],
-		PackedFloat32Array([0.0, 1.0]),
-		Vector2(0.5, 0.08),
-		Vector2(1.2, 0.78),
-		Vector2i(900, 520)
-	)
-	arena_spotlight.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	arena_spotlight.stretch_mode = TextureRect.STRETCH_SCALE
-	arena_back.add_child(arena_spotlight)
-	var arena_floor_haze := TextureRect.new()
-	arena_floor_haze.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	arena_floor_haze.texture = _make_gradient_texture(
-		[
-			Color(0.05, 0.08, 0.12, 0.0),
-			Color(0.05, 0.08, 0.12, 0.0),
-			Color(0.72, 0.84, 0.94, 0.10),
-			Color(0.95, 0.82, 0.62, 0.18)
-		],
-		PackedFloat32Array([0.0, 0.54, 0.80, 1.0]),
-		Vector2(0.5, 0.0),
-		Vector2(0.5, 1.0),
-		Vector2i(900, 520)
-	)
-	arena_floor_haze.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	arena_floor_haze.stretch_mode = TextureRect.STRETCH_SCALE
-	arena_back.add_child(arena_floor_haze)
-	var arena_vignette := ColorRect.new()
-	arena_vignette.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	arena_vignette.color = Color(0.07, 0.11, 0.16, 0.30)
-	arena_back.add_child(arena_vignette)
 	enemy_layer = Control.new()
 	enemy_layer.position = Vector2(102, 20)
 	enemy_layer.size = Vector2(1000, 348)
 	battlefield_canvas.add_child(enemy_layer)
 	for lane_index in range(LANE_COUNT):
-		var lane_panel := PanelContainer.new()
+		var lane_panel := Control.new()
 		lane_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		lane_panel.add_theme_stylebox_override("panel", _make_surface_style(Color(1, 1, 1, 0.05), Color(1, 1, 1, 0.08), 30))
 		enemy_layer.add_child(lane_panel)
-		var lane_top_glow := TextureRect.new()
-		lane_top_glow.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		lane_top_glow.texture = _make_gradient_texture(
-			[Color(1, 1, 1, 0.12), Color(1, 1, 1, 0.02), Color(1, 1, 1, 0.0)],
-			PackedFloat32Array([0.0, 0.18, 1.0]),
-			Vector2(0.5, 0.0),
-			Vector2(0.5, 1.0),
-			Vector2i(240, 320)
-		)
-		lane_top_glow.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		lane_top_glow.stretch_mode = TextureRect.STRETCH_SCALE
-		lane_panel.add_child(lane_top_glow)
 		var lane_marker := ColorRect.new()
 		lane_marker.anchor_left = 0.12
 		lane_marker.anchor_top = 1.0
@@ -550,7 +505,8 @@ func _build_bottom(shell: Control) -> void:
 	deploy_panel.size = Vector2(1300, BOARD_BASE_SIZE.y - BOTTOM_BAR_HEIGHT - BOTTOM_BAR_BOTTOM_MARGIN - DEPLOY_PANEL_TOP - DEPLOY_PANEL_BOTTOM_GAP)
 	deploy_panel.add_theme_stylebox_override("panel", _make_surface_style(Color("4b5b68"), Color("e2eef5"), 30))
 	shell.add_child(deploy_panel)
-	var deploy_box := _make_panel_box(deploy_panel, 12)
+	var deploy_box := _make_panel_box(deploy_panel, 10)
+	deploy_box.add_theme_constant_override("separation", 8)
 	var deploy_head := HBoxContainer.new()
 	deploy_head.add_theme_constant_override("separation", 6)
 	deploy_box.add_child(deploy_head)
@@ -571,57 +527,77 @@ func _build_bottom(shell: Control) -> void:
 	deploy_hint_label.add_theme_color_override("font_color", Color("edf6fb"))
 	deploy_hint_label.add_theme_font_size_override("font_size", 12)
 	deploy_head.add_child(deploy_hint_label)
+	board_grid_wrap = Control.new()
+	board_grid_wrap.custom_minimum_size = Vector2(0, 172)
+	board_grid_wrap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	deploy_box.add_child(board_grid_wrap)
 	board_grid = GridContainer.new()
 	board_grid.columns = 10
-	board_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	board_grid.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	board_grid.add_theme_constant_override("h_separation", 8)
 	board_grid.add_theme_constant_override("v_separation", 8)
-	deploy_box.add_child(board_grid)
+	board_grid_wrap.add_child(board_grid)
 	board_manager.setup(board_grid, self)
+	call_deferred("_layout_deploy_grid")
 
 	bottom_bar = HBoxContainer.new()
 	bottom_bar.size = Vector2(1300, BOTTOM_BAR_HEIGHT)
-	bottom_bar.position = Vector2(150, BOARD_BASE_SIZE.y - bottom_bar.size.y - BOTTOM_BAR_BOTTOM_MARGIN)
-	bottom_bar.add_theme_constant_override("separation", 10)
+	bottom_bar.position = Vector2(150, deploy_panel.position.y + deploy_panel.size.y)
+	bottom_bar.add_theme_constant_override("separation", 8)
 	shell.add_child(bottom_bar)
 	money_panel = PanelContainer.new()
-	money_panel.custom_minimum_size = Vector2(178, 60)
-	money_panel.add_theme_stylebox_override("panel", _make_surface_style(Color("efe4d3"), Color("fff9f0"), 20))
+	money_panel.custom_minimum_size = Vector2(206, 44)
+	money_panel.add_theme_stylebox_override("panel", _make_surface_style(Color("efe4d3"), Color("fff9f0"), 18))
 	bottom_bar.add_child(money_panel)
-	var money_box := _make_panel_box(money_panel, 8)
+	var money_row := HBoxContainer.new()
+	money_row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	money_row.offset_left = 10
+	money_row.offset_top = 4
+	money_row.offset_right = -10
+	money_row.offset_bottom = -4
+	money_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	money_row.add_theme_constant_override("separation", 8)
+	money_panel.add_child(money_row)
 	var money_caption := Label.new()
 	money_caption.set_meta("copy_key", "gold_label")
 	money_caption.add_theme_color_override("font_color", Color("687a86"))
-	money_caption.add_theme_font_size_override("font_size", 9)
-	money_box.add_child(money_caption)
+	money_caption.add_theme_font_size_override("font_size", 10)
+	money_row.add_child(money_caption)
 	gold_value_label = Label.new()
-	gold_value_label.add_theme_font_size_override("font_size", 28)
+	gold_value_label.add_theme_font_size_override("font_size", 22)
 	gold_value_label.add_theme_color_override("font_color", Color("1c3749"))
-	money_box.add_child(gold_value_label)
+	money_row.add_child(gold_value_label)
 	summon_cost_label = Label.new()
 	summon_cost_label.add_theme_color_override("font_color", Color("6f8190"))
 	summon_cost_label.add_theme_font_size_override("font_size", 11)
-	money_box.add_child(summon_cost_label)
+	money_row.add_child(summon_cost_label)
 
 	core_panel = PanelContainer.new()
-	core_panel.custom_minimum_size = Vector2(730, 60)
+	core_panel.custom_minimum_size = Vector2(702, 44)
 	core_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	core_panel.add_theme_stylebox_override("panel", _make_surface_style(Color("132330"), Color("b1d0e3"), 20))
+	core_panel.add_theme_stylebox_override("panel", _make_surface_style(Color("132330"), Color("b1d0e3"), 18))
 	bottom_bar.add_child(core_panel)
-	var core_box := _make_panel_box(core_panel, 8)
+	var core_row := HBoxContainer.new()
+	core_row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	core_row.offset_left = 10
+	core_row.offset_top = 4
+	core_row.offset_right = -10
+	core_row.offset_bottom = -4
+	core_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	core_row.add_theme_constant_override("separation", 10)
+	core_panel.add_child(core_row)
 	core_meta_label = Label.new()
 	core_meta_label.add_theme_font_size_override("font_size", 11)
 	core_meta_label.add_theme_color_override("font_color", Color("a9c6d8"))
-	core_box.add_child(core_meta_label)
+	core_row.add_child(core_meta_label)
 	core_value_label = Label.new()
-	core_value_label.add_theme_font_size_override("font_size", 22)
+	core_value_label.add_theme_font_size_override("font_size", 18)
 	core_value_label.add_theme_color_override("font_color", Color("f5fbff"))
-	core_box.add_child(core_value_label)
+	core_row.add_child(core_value_label)
 	var core_bar_frame := PanelContainer.new()
-	core_bar_frame.custom_minimum_size = Vector2(0, 14)
+	core_bar_frame.custom_minimum_size = Vector2(0, 10)
+	core_bar_frame.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	core_bar_frame.add_theme_stylebox_override("panel", _make_surface_style(Color(1, 1, 1, 0.10), Color(1, 1, 1, 0.06), 999))
-	core_box.add_child(core_bar_frame)
+	core_row.add_child(core_bar_frame)
 	var core_fill_root := Control.new()
 	core_fill_root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	core_bar_frame.add_child(core_fill_root)
@@ -632,17 +608,17 @@ func _build_bottom(shell: Control) -> void:
 	core_fill_root.add_child(core_fill)
 
 	actions_panel = PanelContainer.new()
-	actions_panel.custom_minimum_size = Vector2(356, 60)
+	actions_panel.custom_minimum_size = Vector2(356, 44)
 	actions_panel.size_flags_horizontal = Control.SIZE_SHRINK_END
-	actions_panel.add_theme_stylebox_override("panel", _make_surface_style(Color("132330"), Color("b1d0e3"), 20))
+	actions_panel.add_theme_stylebox_override("panel", _make_surface_style(Color("132330"), Color("b1d0e3"), 18))
 	bottom_bar.add_child(actions_panel)
 	var actions_box := HBoxContainer.new()
 	actions_box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	actions_box.offset_left = 6
-	actions_box.offset_top = 6
-	actions_box.offset_right = -6
-	actions_box.offset_bottom = -6
-	actions_box.add_theme_constant_override("separation", 6)
+	actions_box.offset_left = 4
+	actions_box.offset_top = 4
+	actions_box.offset_right = -4
+	actions_box.offset_bottom = -4
+	actions_box.add_theme_constant_override("separation", 4)
 	actions_panel.add_child(actions_box)
 	totem_button = Button.new()
 	totem_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -682,6 +658,7 @@ func _build_modal(shell: Control) -> void:
 	modal_box.add_child(modal_subtitle)
 	modal_options_box = GridContainer.new()
 	modal_options_box.columns = 3
+	modal_options_box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	modal_options_box.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	modal_options_box.add_theme_constant_override("h_separation", 16)
 	modal_options_box.add_theme_constant_override("v_separation", 16)
@@ -715,10 +692,17 @@ func _apply_responsive_layout() -> void:
 	deploy_panel.position = Vector2(150, DEPLOY_PANEL_TOP)
 	deploy_panel.size = Vector2(1300, BOARD_BASE_SIZE.y - BOTTOM_BAR_HEIGHT - BOTTOM_BAR_BOTTOM_MARGIN - DEPLOY_PANEL_TOP - DEPLOY_PANEL_BOTTOM_GAP)
 	bottom_bar.size = Vector2(1300, BOTTOM_BAR_HEIGHT)
-	bottom_bar.position = Vector2(150, BOARD_BASE_SIZE.y - bottom_bar.size.y - BOTTOM_BAR_BOTTOM_MARGIN)
+	bottom_bar.position = Vector2(150, deploy_panel.position.y + deploy_panel.size.y)
 	effect_layer.position = Vector2.ZERO
 	effect_layer.size = BOARD_BASE_SIZE
+	_layout_deploy_grid()
 	_update_lane_guides()
+
+func _layout_deploy_grid() -> void:
+	if board_grid_wrap == null or board_grid == null:
+		return
+	var grid_size := board_grid.get_combined_minimum_size()
+	board_grid.position = Vector2(maxf((board_grid_wrap.size.x - grid_size.x) * 0.5, 0.0), -34.0)
 
 func _apply_localization() -> void:
 	stage_kicker_label.text = Localization.text("stage_overview")
@@ -1580,22 +1564,22 @@ func _build_action_button(button: Button, emblem: String, primary: Color, second
 	button.add_theme_stylebox_override("hover", _make_button_style(primary.lightened(0.08), secondary.lightened(0.08), 18))
 	button.add_theme_stylebox_override("pressed", _make_button_style(primary.darkened(0.06), secondary.darkened(0.06), 18))
 	button.add_theme_color_override("font_color", Color("fff8ef"))
-	button.custom_minimum_size = Vector2(154, 46)
+	button.custom_minimum_size = Vector2(154, 34)
 	var content := HBoxContainer.new()
 	content.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	content.offset_left = 6
-	content.offset_top = 6
-	content.offset_right = -6
-	content.offset_bottom = -6
+	content.offset_left = 4
+	content.offset_top = 3
+	content.offset_right = -4
+	content.offset_bottom = -3
 	content.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	content.alignment = BoxContainer.ALIGNMENT_CENTER
-	content.add_theme_constant_override("separation", 5)
+	content.add_theme_constant_override("separation", 4)
 	button.add_child(content)
 	var icon_slot := CenterContainer.new()
-	icon_slot.custom_minimum_size = Vector2(28, 28)
+	icon_slot.custom_minimum_size = Vector2(22, 22)
 	content.add_child(icon_slot)
 	var icon := IconBadge.new()
-	icon.custom_minimum_size = Vector2(24, 24)
+	icon.custom_minimum_size = Vector2(18, 18)
 	icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	icon.configure(primary.lightened(0.1), secondary.darkened(0.05), Color("fff4dd"), "button", emblem)
@@ -1605,18 +1589,18 @@ func _build_action_button(button: Button, emblem: String, primary: Color, second
 	copy.alignment = BoxContainer.ALIGNMENT_CENTER
 	content.add_child(copy)
 	var title := Label.new()
-	title.add_theme_font_size_override("font_size", 14)
+	title.add_theme_font_size_override("font_size", 12)
 	title.add_theme_color_override("font_color", Color("fffaf0"))
 	copy.add_child(title)
 	var caption := Label.new()
-	caption.add_theme_font_size_override("font_size", 10)
+	caption.add_theme_font_size_override("font_size", 9)
 	caption.add_theme_color_override("font_color", Color(1, 1, 1, 0.72))
-	caption.visible = true
+	caption.visible = false
 	copy.add_child(caption)
 	var cost := Label.new()
 	cost.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	cost.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	cost.add_theme_font_size_override("font_size", 16)
+	cost.add_theme_font_size_override("font_size", 14)
 	cost.add_theme_color_override("font_color", Color("fff7de"))
 	content.add_child(cost)
 	button.set_meta("title_label", title)
@@ -1646,21 +1630,29 @@ func _make_panel_box(panel: Control, margin: int) -> VBoxContainer:
 
 func _make_modal_choice_card(index: int, entry: Dictionary) -> PanelContainer:
 	var card := PanelContainer.new()
-	card.custom_minimum_size = Vector2(0, 230)
+	card.custom_minimum_size = Vector2(260, 230)
+	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	card.add_theme_stylebox_override("panel", _make_surface_style(Color("ffffff"), Color("d8e4eb"), 28))
 	var box := _make_panel_box(card, 16)
+	var crest_wrap := CenterContainer.new()
+	crest_wrap.custom_minimum_size = Vector2(0, 24)
+	box.add_child(crest_wrap)
 	var crest := IconBadge.new()
-	crest.custom_minimum_size = Vector2(56, 56)
+	crest.custom_minimum_size = Vector2(20, 20)
+	crest.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	crest.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	crest.configure(_modal_primary_color(index), _modal_secondary_color(index), Color("fff9eb"), "button", "summon" if index % 2 == 0 else "stats")
-	box.add_child(crest)
+	crest_wrap.add_child(crest)
 	var title := Label.new()
 	title.text = str(entry.get("title", ""))
 	title.add_theme_color_override("font_color", Color("203a4b"))
+	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	title.add_theme_font_size_override("font_size", 22)
 	box.add_child(title)
 	var desc := Label.new()
 	desc.text = str(entry.get("description", ""))
 	desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	desc.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	desc.add_theme_color_override("font_color", Color("607582"))
 	desc.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	box.add_child(desc)
