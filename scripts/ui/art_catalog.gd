@@ -48,11 +48,29 @@ const BACKGROUND_BATTLEFIELD := "res://assets/generated/backgrounds/whimsy_fores
 const FALLBACK_HERO := "res://assets/generated/heroes/frost_oracle.svg"
 const FALLBACK_ENEMY := "res://assets/generated/enemies/scout.svg"
 const FALLBACK_EFFECT := "res://assets/generated/effects/impact_spark.svg"
+const BLADE_DANCER_FRAME_PREFIX := "res://assets/generated/heroes/blade_dancer_anim/5fff7784a703070a45a3511a9bdc2b0d_frame_"
+const BLADE_DANCER_FRAME_COUNT := 35
 
 static var _texture_cache: Dictionary = {}
+static var _animation_cache: Dictionary = {}
 
 static func get_hero_texture(hero_id: String) -> Texture2D:
 	return _load_texture(HERO_TEXTURE_BY_ID.get(hero_id, FALLBACK_HERO))
+
+static func get_hero_animation_frames(hero_id: String) -> Array[Texture2D]:
+	var paths := _get_hero_animation_paths(hero_id)
+	if paths.is_empty():
+		return []
+	var cache_key := "|".join(paths)
+	if not _animation_cache.has(cache_key):
+		var frames: Array[Texture2D] = []
+		for path in paths:
+			var texture := _load_texture(path)
+			if texture != null:
+				frames.append(texture)
+		_animation_cache[cache_key] = frames
+	var cached: Array[Texture2D] = _animation_cache.get(cache_key, [])
+	return cached
 
 static func get_enemy_texture(enemy_id: String) -> Texture2D:
 	return _load_texture(ENEMY_TEXTURE_BY_ID.get(enemy_id, FALLBACK_ENEMY))
@@ -70,3 +88,11 @@ static func _load_texture(path: String) -> Texture2D:
 	if not _texture_cache.has(path):
 		_texture_cache[path] = load(path)
 	return _texture_cache[path] as Texture2D
+
+static func _get_hero_animation_paths(hero_id: String) -> PackedStringArray:
+	var paths := PackedStringArray()
+	match hero_id:
+		"blade_dancer":
+			for frame_index in range(1, BLADE_DANCER_FRAME_COUNT + 1):
+				paths.append("%s%06d.png" % [BLADE_DANCER_FRAME_PREFIX, frame_index])
+	return paths

@@ -25,7 +25,7 @@ var _name_label: Label
 var _hp_fill: ColorRect
 
 func _ready() -> void:
-	custom_minimum_size = Vector2(88, 86)
+	custom_minimum_size = Vector2(96, 92)
 	mouse_filter = Control.MOUSE_FILTER_PASS
 	clip_contents = true
 	tooltip_text = ""
@@ -41,11 +41,11 @@ func _ready() -> void:
 	var box := VBoxContainer.new()
 	box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	box.alignment = BoxContainer.ALIGNMENT_CENTER
-	box.add_theme_constant_override("separation", 2)
+	box.add_theme_constant_override("separation", 4)
 	margin.add_child(box)
 
 	_icon = IconBadge.new()
-	_icon.custom_minimum_size = Vector2(72, 72)
+	_icon.custom_minimum_size = Vector2(74, 74)
 	_icon.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_icon.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	box.add_child(_icon)
@@ -55,17 +55,19 @@ func _ready() -> void:
 	box.add_child(_name_label)
 
 	var hp_wrap := CenterContainer.new()
-	hp_wrap.custom_minimum_size = Vector2(0, 8)
+	hp_wrap.custom_minimum_size = Vector2(0, 10)
 	box.add_child(hp_wrap)
 
 	var hp_frame := PanelContainer.new()
-	hp_frame.custom_minimum_size = Vector2(64, 8)
+	hp_frame.custom_minimum_size = Vector2(66, 8)
 	var hp_style := StyleBoxFlat.new()
 	hp_style.bg_color = Color(1, 1, 1, 0.14)
 	hp_style.corner_radius_top_left = 999
 	hp_style.corner_radius_top_right = 999
 	hp_style.corner_radius_bottom_left = 999
 	hp_style.corner_radius_bottom_right = 999
+	hp_style.anti_aliasing = true
+	hp_style.anti_aliasing_size = 1.0
 	hp_frame.add_theme_stylebox_override("panel", hp_style)
 	hp_wrap.add_child(hp_frame)
 
@@ -152,20 +154,26 @@ func _update_visuals() -> void:
 	if enemy_def != null:
 		base_color = enemy_def.color
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(base_color.r, base_color.g, base_color.b, 0.18)
-	style.border_color = base_color.lightened(0.42)
+	style.bg_color = Color(base_color.r, base_color.g, base_color.b, 0.20)
+	style.border_color = base_color.lightened(0.46)
 	style.border_width_left = 1
 	style.border_width_top = 1
 	style.border_width_right = 1
 	style.border_width_bottom = 1
-	style.corner_radius_top_left = 18
-	style.corner_radius_top_right = 18
-	style.corner_radius_bottom_left = 18
-	style.corner_radius_bottom_right = 18
+	style.corner_radius_top_left = 20
+	style.corner_radius_top_right = 20
+	style.corner_radius_bottom_left = 20
+	style.corner_radius_bottom_right = 20
+	style.shadow_color = Color(0, 0, 0, 0.20)
+	style.shadow_size = 8
+	style.shadow_offset = Vector2(0, 3)
+	style.anti_aliasing = true
+	style.anti_aliasing_size = 1.2
 	add_theme_stylebox_override("panel", style)
-	var texture := ArtCatalog.get_enemy_texture(enemy_def.id if enemy_def != null else "")
+	var enemy_id: String = str(enemy_def.id) if enemy_def != null else ""
+	var texture := ArtCatalog.get_enemy_texture(enemy_id)
 	if texture != null:
-		_icon.configure_with_texture(texture, base_color)
+		_icon.configure_with_texture(texture, base_color, true)
 	else:
 		_icon.configure(base_color.lightened(0.1), base_color.darkened(0.3), Color("f3d8c7"), "avatar")
 

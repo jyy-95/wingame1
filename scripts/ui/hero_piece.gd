@@ -21,7 +21,7 @@ var _star_label: Label
 var _star_badge: PanelContainer
 
 func _ready() -> void:
-	custom_minimum_size = Vector2(80, 40)
+	custom_minimum_size = Vector2(84, 44)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	clip_contents = true
 	tooltip_text = ""
@@ -34,10 +34,10 @@ func _ready() -> void:
 	_icon = IconBadge.new()
 	_icon.anchor_right = 1.0
 	_icon.anchor_bottom = 1.0
-	_icon.offset_left = 2
-	_icon.offset_top = 2
-	_icon.offset_right = -2
-	_icon.offset_bottom = -2
+	_icon.offset_left = 3
+	_icon.offset_top = 3
+	_icon.offset_right = -3
+	_icon.offset_bottom = -3
 	body.add_child(_icon)
 
 	_star_badge = PanelContainer.new()
@@ -45,21 +45,26 @@ func _ready() -> void:
 	_star_badge.anchor_top = 0.0
 	_star_badge.anchor_right = 1.0
 	_star_badge.anchor_bottom = 0.0
-	_star_badge.offset_left = -22
-	_star_badge.offset_top = 2
-	_star_badge.offset_right = -2
-	_star_badge.offset_bottom = 14
+	_star_badge.offset_left = -24
+	_star_badge.offset_top = 3
+	_star_badge.offset_right = -3
+	_star_badge.offset_bottom = 16
 	var badge_style := StyleBoxFlat.new()
-	badge_style.bg_color = Color(0.10, 0.16, 0.22, 0.82)
-	badge_style.border_color = Color(1, 1, 1, 0.18)
+	badge_style.bg_color = Color(0.11, 0.17, 0.24, 0.88)
+	badge_style.border_color = Color(1, 1, 1, 0.22)
 	badge_style.border_width_left = 1
 	badge_style.border_width_top = 1
 	badge_style.border_width_right = 1
 	badge_style.border_width_bottom = 1
-	badge_style.corner_radius_top_left = 9
-	badge_style.corner_radius_top_right = 9
-	badge_style.corner_radius_bottom_left = 9
-	badge_style.corner_radius_bottom_right = 9
+	badge_style.corner_radius_top_left = 10
+	badge_style.corner_radius_top_right = 10
+	badge_style.corner_radius_bottom_left = 10
+	badge_style.corner_radius_bottom_right = 10
+	badge_style.shadow_color = Color(0, 0, 0, 0.22)
+	badge_style.shadow_size = 5
+	badge_style.shadow_offset = Vector2(0, 2)
+	badge_style.anti_aliasing = true
+	badge_style.anti_aliasing_size = 1.1
 	_star_badge.add_theme_stylebox_override("panel", badge_style)
 	_star_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	body.add_child(_star_badge)
@@ -173,20 +178,47 @@ func _update_visuals() -> void:
 	if hero_def != null:
 		base_color = hero_def.color
 	var style := StyleBoxFlat.new()
-	style.bg_color = Color(base_color.r, base_color.g, base_color.b, 0.22)
-	style.border_color = base_color.lightened(0.55)
+	style.bg_color = Color(base_color.r, base_color.g, base_color.b, 0.24)
+	style.border_color = base_color.lightened(0.60)
 	style.border_width_left = 1
 	style.border_width_top = 1
 	style.border_width_right = 1
 	style.border_width_bottom = 1
-	style.corner_radius_top_left = 16
-	style.corner_radius_top_right = 16
-	style.corner_radius_bottom_left = 16
-	style.corner_radius_bottom_right = 16
+	style.corner_radius_top_left = 18
+	style.corner_radius_top_right = 18
+	style.corner_radius_bottom_left = 18
+	style.corner_radius_bottom_right = 18
+	style.shadow_color = Color(0, 0, 0, 0.20)
+	style.shadow_size = 8
+	style.shadow_offset = Vector2(0, 3)
+	style.anti_aliasing = true
+	style.anti_aliasing_size = 1.2
 	add_theme_stylebox_override("panel", style)
-	var texture := ArtCatalog.get_hero_texture(hero_def.id if hero_def != null else "")
+	var badge_style := StyleBoxFlat.new()
+	badge_style.bg_color = base_color.darkened(0.36)
+	badge_style.border_color = base_color.lightened(0.55)
+	badge_style.border_width_left = 1
+	badge_style.border_width_top = 1
+	badge_style.border_width_right = 1
+	badge_style.border_width_bottom = 1
+	badge_style.corner_radius_top_left = 10
+	badge_style.corner_radius_top_right = 10
+	badge_style.corner_radius_bottom_left = 10
+	badge_style.corner_radius_bottom_right = 10
+	badge_style.shadow_color = Color(0, 0, 0, 0.22)
+	badge_style.shadow_size = 5
+	badge_style.shadow_offset = Vector2(0, 2)
+	badge_style.anti_aliasing = true
+	badge_style.anti_aliasing_size = 1.1
+	_star_badge.add_theme_stylebox_override("panel", badge_style)
+	var hero_id: String = str(hero_def.id) if hero_def != null else ""
+	var animation_frames := ArtCatalog.get_hero_animation_frames(hero_id)
+	if not animation_frames.is_empty():
+		_icon.configure_with_animation(animation_frames, 12.0, base_color)
+		return
+	var texture := ArtCatalog.get_hero_texture(hero_id)
 	if texture != null:
-		_icon.configure_with_texture(texture, base_color)
+		_icon.configure_with_texture(texture, base_color, true)
 	else:
 		_icon.configure(base_color.lightened(0.18), base_color.darkened(0.24), Color("f5e4d1"), "avatar")
 

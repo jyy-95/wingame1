@@ -107,3 +107,11 @@ main.tscn → BattleRoot → BoardManager + WaveDirector + EventDirector
 - 状态可变是预期的（RefCounted 对象，非不可变模式）
 - 基于字典的增益/减益效果模式
 - 通过 `Localization.is_chinese()` 实现中/英文本本地化
+
+## Repository Editing Rules
+
+- On Windows, prefer modifying files via PowerShell instead of apply_patch when editing text files.
+- Always write files using UTF-8 encoding.
+- Prefer UTF-8 without BOM unless the target file already uses another encoding.
+- When using PowerShell to write files, explicitly set encoding and avoid default system encoding.
+- Be careful not to introduce mojibake or garbled Chinese text.
