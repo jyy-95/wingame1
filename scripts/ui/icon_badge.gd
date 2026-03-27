@@ -252,14 +252,18 @@ func _get_profiled_texture_source_rect(display_texture: Texture2D, target_ratio:
 func _get_animation_crop_settings() -> Dictionary:
 	match animation_crop_profile:
 		"iron_warden":
-			return {"frame_width_pct": 0.60, "crop_zoom": 1.04, "focus": Vector2(0.54, 0.46)}
+			return {"frame_width_pct": 0.76, "crop_zoom": 1.04, "focus": Vector2(0.54, 0.46)}
 		"blade_dancer":
-			return {"frame_width_pct": 0.62, "crop_zoom": 1.68, "focus": Vector2(0.50, 0.28)}
+			return {"frame_width_pct": 0.74, "crop_zoom": 1.68, "focus": Vector2(0.50, 0.28)}
+		"venom_sage":
+			return {"frame_width_pct": 0.72, "crop_zoom": 1.18, "focus": Vector2(0.53, 0.42)}
+		"ember_mage":
+			return {"frame_width_pct": 0.70, "crop_zoom": 1.10, "focus": Vector2(0.50, 0.46)}
 		_:
-			return {"frame_width_pct": 0.48, "crop_zoom": 1.0, "focus": Vector2(0.5, 0.5)}
+			return {"frame_width_pct": 0.70, "crop_zoom": 1.0, "focus": Vector2(0.5, 0.5)}
 
 func _get_portrait_frame_rect(inner: Rect2, crop_settings: Dictionary) -> Rect2:
-	var frame_width_pct := float(crop_settings.get("frame_width_pct", 0.48))
+	var frame_width_pct := float(crop_settings.get("frame_width_pct", 0.70))
 	var frame_size := Vector2(minf(inner.size.x * frame_width_pct, inner.size.y * 0.92), inner.size.y - 2.0)
 	var position := Vector2(
 		inner.position.x + ((inner.size.x - frame_size.x) * 0.5),

@@ -185,14 +185,64 @@ func _build_layout() -> void:
 	board_backdrop.position = Vector2.ZERO
 	board_backdrop.size = BOARD_BASE_SIZE
 	board_backdrop.clip_contents = true
-	board_backdrop.add_theme_stylebox_override("panel", _make_surface_style(Color("0c1822"), Color("bfd8e8"), 34))
+	board_backdrop.add_theme_stylebox_override("panel", _make_surface_style(Color(0.03, 0.06, 0.09, 0.18), Color("bfd8e8"), 34))
 	shell_root.add_child(board_backdrop)
+	var board_map := TextureRect.new()
+	board_map.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	board_map.texture = ArtCatalog.get_battlefield_background()
+	board_map.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	board_map.stretch_mode = TextureRect.STRETCH_SCALE
+	board_map.modulate = Color(1.0, 1.0, 1.0, 0.96)
+	board_backdrop.add_child(board_map)
+	var board_map_tint := TextureRect.new()
+	board_map_tint.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	board_map_tint.texture = _make_gradient_texture(
+		[
+			Color(0.04, 0.07, 0.10, 0.14),
+			Color(0.04, 0.07, 0.10, 0.04),
+			Color(0.04, 0.07, 0.10, 0.18)
+		],
+		PackedFloat32Array([0.0, 0.46, 1.0]),
+		Vector2(0.5, 0.0),
+		Vector2(0.5, 1.0),
+		Vector2i(1200, 1200)
+	)
+	board_map_tint.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	board_map_tint.stretch_mode = TextureRect.STRETCH_SCALE
+	board_backdrop.add_child(board_map_tint)
+	var board_focus_mask := TextureRect.new()
+	board_focus_mask.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	board_focus_mask.texture = _make_radial_texture(
+		[Color(0.0, 0.0, 0.0, 0.0), Color(0.03, 0.05, 0.08, 0.04), Color(0.03, 0.05, 0.08, 0.10)],
+		PackedFloat32Array([0.0, 0.58, 1.0]),
+		Vector2(0.5, 0.46),
+		Vector2(1.08, 0.92),
+		Vector2i(1200, 1200)
+	)
+	board_focus_mask.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	board_focus_mask.stretch_mode = TextureRect.STRETCH_SCALE
+	board_backdrop.add_child(board_focus_mask)
+	var top_panel_scrim := ColorRect.new()
+	top_panel_scrim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	top_panel_scrim.anchor_right = 1.0
+	top_panel_scrim.anchor_bottom = 0.0
+	top_panel_scrim.offset_bottom = 150
+	top_panel_scrim.color = Color(0.04, 0.08, 0.11, 0.08)
+	board_backdrop.add_child(top_panel_scrim)
+	var bottom_panel_scrim := ColorRect.new()
+	bottom_panel_scrim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	bottom_panel_scrim.anchor_top = 1.0
+	bottom_panel_scrim.anchor_right = 1.0
+	bottom_panel_scrim.anchor_bottom = 1.0
+	bottom_panel_scrim.offset_top = -300
+	bottom_panel_scrim.color = Color(0.04, 0.08, 0.11, 0.10)
+	board_backdrop.add_child(bottom_panel_scrim)
 	var board_sheen := TextureRect.new()
 	board_sheen.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	board_sheen.texture = _make_gradient_texture(
 		[
-			Color(0.76, 0.90, 1.0, 0.18),
-			Color(0.76, 0.90, 1.0, 0.05),
+			Color(0.76, 0.90, 1.0, 0.08),
+			Color(0.76, 0.90, 1.0, 0.02),
 			Color(0.04, 0.08, 0.12, 0.0)
 		],
 		PackedFloat32Array([0.0, 0.28, 1.0]),
@@ -207,10 +257,10 @@ func _build_layout() -> void:
 	board_side_vignette.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	board_side_vignette.texture = _make_gradient_texture(
 		[
-			Color(0.14, 0.25, 0.33, 0.68),
+			Color(0.14, 0.25, 0.33, 0.20),
 			Color(0.14, 0.25, 0.33, 0.0),
 			Color(0.14, 0.25, 0.33, 0.0),
-			Color(0.14, 0.25, 0.33, 0.64)
+			Color(0.14, 0.25, 0.33, 0.20)
 		],
 		PackedFloat32Array([0.0, 0.14, 0.86, 1.0]),
 		Vector2(0.0, 0.5),
@@ -263,32 +313,52 @@ func _build_top_row(shell: Control) -> void:
 	top_row.size = BOARD_BASE_SIZE
 	shell.add_child(top_row)
 
+	var stage_halo := TextureRect.new()
+	stage_halo.position = Vector2(566, 12)
+	stage_halo.size = Vector2(462, 184)
+	stage_halo.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	stage_halo.texture = ArtCatalog.get_effect_texture("solar_flare")
+	stage_halo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	stage_halo.stretch_mode = TextureRect.STRETCH_SCALE
+	stage_halo.modulate = Color(1.0, 0.86, 0.54, 0.14)
+	top_row.add_child(stage_halo)
+
 	top_stage_stack = VBoxContainer.new()
-	top_stage_stack.position = Vector2(585, 42)
-	top_stage_stack.custom_minimum_size = Vector2(430, 116)
+	top_stage_stack.position = Vector2(548, 32)
+	top_stage_stack.custom_minimum_size = Vector2(504, 132)
 	top_stage_stack.alignment = BoxContainer.ALIGNMENT_CENTER
-	top_stage_stack.add_theme_constant_override("separation", 12)
+	top_stage_stack.add_theme_constant_override("separation", 14)
 	top_row.add_child(top_stage_stack)
 
 	var stage_card := PanelContainer.new()
-	stage_card.custom_minimum_size = Vector2(444, 84)
-	stage_card.add_theme_stylebox_override("panel", _make_surface_style(Color("132330"), Color("b8d3e3"), 999))
+	stage_card.custom_minimum_size = Vector2(520, 96)
+	stage_card.add_theme_stylebox_override("panel", _make_surface_style(Color("11212f"), Color("f0be70"), 999))
 	top_stage_stack.add_child(stage_card)
+	var stage_sheen := ColorRect.new()
+	stage_sheen.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	stage_sheen.anchor_right = 1.0
+	stage_sheen.anchor_bottom = 0.0
+	stage_sheen.offset_left = 18
+	stage_sheen.offset_top = 8
+	stage_sheen.offset_right = -18
+	stage_sheen.offset_bottom = 34
+	stage_sheen.color = Color(1, 1, 1, 0.05)
+	stage_card.add_child(stage_sheen)
 	var stage_box := _make_panel_box(stage_card, 12)
 	stage_kicker_label = Label.new()
 	stage_kicker_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	stage_kicker_label.add_theme_font_size_override("font_size", 12)
-	stage_kicker_label.add_theme_color_override("font_color", Color("c3d9e7"))
+	stage_kicker_label.add_theme_font_size_override("font_size", 13)
+	stage_kicker_label.add_theme_color_override("font_color", Color("f0cf95"))
 	stage_box.add_child(stage_kicker_label)
 	stage_label = Label.new()
 	stage_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	stage_label.add_theme_font_size_override("font_size", 32)
-	stage_label.add_theme_color_override("font_color", Color("f7fbff"))
+	stage_label.add_theme_font_size_override("font_size", 36)
+	stage_label.add_theme_color_override("font_color", Color("fffaf2"))
 	stage_box.add_child(stage_label)
 
 	var hud_row := HBoxContainer.new()
 	hud_row.alignment = BoxContainer.ALIGNMENT_CENTER
-	hud_row.add_theme_constant_override("separation", 10)
+	hud_row.add_theme_constant_override("separation", 12)
 	top_stage_stack.add_child(hud_row)
 	wave_badge_label = _make_hud_pill(hud_row)
 	enemy_badge_label = _make_hud_pill(hud_row)
@@ -297,7 +367,7 @@ func _build_top_row(shell: Control) -> void:
 	var utility_panel := PanelContainer.new()
 	utility_panel.position = Vector2(1064, 40)
 	utility_panel.custom_minimum_size = Vector2(474, 46)
-	utility_panel.add_theme_stylebox_override("panel", _make_surface_style(Color(0.09, 0.15, 0.20, 0.56), Color(1, 1, 1, 0.18), 999))
+	utility_panel.add_theme_stylebox_override("panel", _make_surface_style(Color(0.09, 0.15, 0.20, 0.44), Color(1, 1, 1, 0.16), 999))
 	top_row.add_child(utility_panel)
 	top_utility_box = HBoxContainer.new()
 	top_utility_box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -331,6 +401,12 @@ func _build_top_row(shell: Control) -> void:
 	top_utility_box.add_child(language_option)
 
 func _build_side_rails(shell: Control) -> void:
+	var left_rail_frame := PanelContainer.new()
+	left_rail_frame.position = Vector2(24, 148)
+	left_rail_frame.custom_minimum_size = Vector2(102, 316)
+	left_rail_frame.add_theme_stylebox_override("panel", _make_surface_style(Color(0.06, 0.11, 0.16, 0.58), Color(1, 1, 1, 0.10), 28))
+	shell.add_child(left_rail_frame)
+
 	left_rail = VBoxContainer.new()
 	left_rail.position = Vector2(34, 160)
 	left_rail.custom_minimum_size = Vector2(82, 290)
@@ -349,6 +425,12 @@ func _build_side_rails(shell: Control) -> void:
 	quick_log_label = quick_log_button.get_meta("title_label") as Label
 	left_rail.add_child(quick_log_button)
 
+	var right_rail_frame := PanelContainer.new()
+	right_rail_frame.position = Vector2(1340, 148)
+	right_rail_frame.custom_minimum_size = Vector2(236, 274)
+	right_rail_frame.add_theme_stylebox_override("panel", _make_surface_style(Color(0.06, 0.11, 0.16, 0.48), Color(1, 1, 1, 0.08), 30))
+	shell.add_child(right_rail_frame)
+
 	right_rail = VBoxContainer.new()
 	right_rail.position = Vector2(1352, 160)
 	right_rail.custom_minimum_size = Vector2(214, 244)
@@ -359,8 +441,18 @@ func _build_side_rails(shell: Control) -> void:
 	totem_card = PanelContainer.new()
 	totem_card.custom_minimum_size = Vector2(214, 182)
 	totem_card.size_flags_horizontal = Control.SIZE_SHRINK_END
-	totem_card.add_theme_stylebox_override("panel", _make_surface_style(Color("132331"), Color("b2d0e1"), 24))
+	totem_card.add_theme_stylebox_override("panel", _make_surface_style(Color("10212d"), Color("6fd0cf"), 26))
 	right_rail.add_child(totem_card)
+	var totem_glow := ColorRect.new()
+	totem_glow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	totem_glow.anchor_right = 1.0
+	totem_glow.anchor_bottom = 0.0
+	totem_glow.offset_left = 12
+	totem_glow.offset_top = 10
+	totem_glow.offset_right = -12
+	totem_glow.offset_bottom = 42
+	totem_glow.color = Color(0.62, 0.94, 0.90, 0.10)
+	totem_card.add_child(totem_glow)
 	var totem_box := _make_panel_box(totem_card, 14)
 	var totem_icon_wrap := CenterContainer.new()
 	totem_icon_wrap.custom_minimum_size = Vector2(0, 80)
@@ -391,7 +483,7 @@ func _build_side_rails(shell: Control) -> void:
 	threat_wrap = PanelContainer.new()
 	threat_wrap.custom_minimum_size = Vector2(82, 82)
 	threat_wrap.size_flags_horizontal = Control.SIZE_SHRINK_END
-	threat_wrap.add_theme_stylebox_override("panel", _make_surface_style(Color("72281f"), Color("ffd6ca"), 22))
+	threat_wrap.add_theme_stylebox_override("panel", _make_surface_style(Color("611e18"), Color("ffccba"), 24))
 	right_rail.add_child(threat_wrap)
 	var threat_center := CenterContainer.new()
 	threat_center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -458,7 +550,7 @@ func _build_battlefield(shell: Control) -> void:
 	battlefield_frame = PanelContainer.new()
 	battlefield_frame.position = Vector2(180, 150)
 	battlefield_frame.size = Vector2(1240, 430)
-	battlefield_frame.add_theme_stylebox_override("panel", _make_surface_style(Color(0.09, 0.14, 0.20, 0.24), Color(0.90, 0.96, 0.99, 0.24), 40))
+	battlefield_frame.add_theme_stylebox_override("panel", _make_surface_style(Color(0.05, 0.08, 0.11, 0.02), Color(0.90, 0.96, 0.99, 0.12), 40))
 	shell.add_child(battlefield_frame)
 	var battlefield_canvas := Control.new()
 	battlefield_canvas.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -467,15 +559,35 @@ func _build_battlefield(shell: Control) -> void:
 	arena_back.position = Vector2(18, 18)
 	arena_back.size = Vector2(1204, 394)
 	arena_back.clip_contents = true
-	arena_back.add_theme_stylebox_override("panel", _make_surface_style(Color("253847"), Color(1, 1, 1, 0.08), 26))
+	arena_back.add_theme_stylebox_override("panel", _make_surface_style(Color(0.03, 0.05, 0.08, 0.04), Color(1, 1, 1, 0.04), 26))
 	battlefield_canvas.add_child(arena_back)
 	var arena_background := TextureRect.new()
 	arena_background.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	arena_background.texture = ArtCatalog.get_battlefield_background()
 	arena_background.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	arena_background.stretch_mode = TextureRect.STRETCH_SCALE
-	arena_background.modulate = Color.WHITE
+	arena_background.modulate = Color(1.0, 1.0, 1.0, 0.0)
 	arena_back.add_child(arena_background)
+	var arena_top_glow := ColorRect.new()
+	arena_top_glow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	arena_top_glow.anchor_right = 1.0
+	arena_top_glow.anchor_bottom = 0.0
+	arena_top_glow.offset_bottom = 104
+	arena_top_glow.color = Color(0.62, 0.82, 0.96, 0.10)
+	arena_back.add_child(arena_top_glow)
+	var arena_side_vignette := ColorRect.new()
+	arena_side_vignette.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	arena_side_vignette.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	arena_side_vignette.color = Color(0.03, 0.06, 0.10, 0.10)
+	arena_back.add_child(arena_side_vignette)
+	var arena_floor_glow := ColorRect.new()
+	arena_floor_glow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	arena_floor_glow.anchor_top = 1.0
+	arena_floor_glow.anchor_right = 1.0
+	arena_floor_glow.anchor_bottom = 1.0
+	arena_floor_glow.offset_top = -102
+	arena_floor_glow.color = Color(0.96, 0.72, 0.38, 0.08)
+	arena_back.add_child(arena_floor_glow)
 	enemy_layer = Control.new()
 	enemy_layer.position = Vector2(102, 20)
 	enemy_layer.size = Vector2(1000, 348)
@@ -484,6 +596,20 @@ func _build_battlefield(shell: Control) -> void:
 		var lane_panel := Control.new()
 		lane_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		enemy_layer.add_child(lane_panel)
+		var lane_fill := ColorRect.new()
+		lane_fill.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		lane_fill.anchor_right = 1.0
+		lane_fill.anchor_bottom = 1.0
+		lane_fill.color = Color(0.08 + (0.02 * lane_index), 0.14, 0.20, 0.10)
+		lane_panel.add_child(lane_fill)
+		var lane_shine := ColorRect.new()
+		lane_shine.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		lane_shine.anchor_left = 0.10
+		lane_shine.anchor_right = 0.90
+		lane_shine.offset_top = 18
+		lane_shine.offset_bottom = 46
+		lane_shine.color = Color(0.76, 0.90, 1.0, 0.05)
+		lane_panel.add_child(lane_shine)
 		var lane_marker := ColorRect.new()
 		lane_marker.anchor_left = 0.12
 		lane_marker.anchor_top = 1.0
@@ -503,8 +629,18 @@ func _build_bottom(shell: Control) -> void:
 	deploy_panel = PanelContainer.new()
 	deploy_panel.position = Vector2(150, DEPLOY_PANEL_TOP)
 	deploy_panel.size = Vector2(1300, BOARD_BASE_SIZE.y - BOTTOM_BAR_HEIGHT - BOTTOM_BAR_BOTTOM_MARGIN - DEPLOY_PANEL_TOP - DEPLOY_PANEL_BOTTOM_GAP)
-	deploy_panel.add_theme_stylebox_override("panel", _make_surface_style(Color("4b5b68"), Color("e2eef5"), 30))
+	deploy_panel.add_theme_stylebox_override("panel", _make_surface_style(Color(0.16, 0.22, 0.28, 0.28), Color("d9e7f2"), 32))
 	shell.add_child(deploy_panel)
+	var deploy_glow := ColorRect.new()
+	deploy_glow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	deploy_glow.anchor_right = 1.0
+	deploy_glow.anchor_bottom = 0.0
+	deploy_glow.offset_left = 18
+	deploy_glow.offset_top = 12
+	deploy_glow.offset_right = -18
+	deploy_glow.offset_bottom = 44
+	deploy_glow.color = Color(0.92, 0.97, 1.0, 0.06)
+	deploy_panel.add_child(deploy_glow)
 	var deploy_box := _make_panel_box(deploy_panel, 10)
 	deploy_box.add_theme_constant_override("separation", 8)
 	var deploy_head := HBoxContainer.new()
@@ -546,7 +682,7 @@ func _build_bottom(shell: Control) -> void:
 	shell.add_child(bottom_bar)
 	money_panel = PanelContainer.new()
 	money_panel.custom_minimum_size = Vector2(206, 44)
-	money_panel.add_theme_stylebox_override("panel", _make_surface_style(Color("efe4d3"), Color("fff9f0"), 18))
+	money_panel.add_theme_stylebox_override("panel", _make_surface_style(Color(0.90, 0.85, 0.76, 0.88), Color("fff9f0"), 18))
 	bottom_bar.add_child(money_panel)
 	var money_row := HBoxContainer.new()
 	money_row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -574,7 +710,7 @@ func _build_bottom(shell: Control) -> void:
 	core_panel = PanelContainer.new()
 	core_panel.custom_minimum_size = Vector2(702, 44)
 	core_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	core_panel.add_theme_stylebox_override("panel", _make_surface_style(Color("132330"), Color("b1d0e3"), 18))
+	core_panel.add_theme_stylebox_override("panel", _make_surface_style(Color(0.07, 0.13, 0.18, 0.46), Color("b1d0e3"), 18))
 	bottom_bar.add_child(core_panel)
 	var core_row := HBoxContainer.new()
 	core_row.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -610,7 +746,7 @@ func _build_bottom(shell: Control) -> void:
 	actions_panel = PanelContainer.new()
 	actions_panel.custom_minimum_size = Vector2(356, 44)
 	actions_panel.size_flags_horizontal = Control.SIZE_SHRINK_END
-	actions_panel.add_theme_stylebox_override("panel", _make_surface_style(Color("132330"), Color("b1d0e3"), 18))
+	actions_panel.add_theme_stylebox_override("panel", _make_surface_style(Color(0.07, 0.13, 0.18, 0.46), Color("b1d0e3"), 18))
 	bottom_bar.add_child(actions_panel)
 	var actions_box := HBoxContainer.new()
 	actions_box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -1065,6 +1201,7 @@ func _apply_immediate_trait_effects(trait_def) -> void:
 		run_state.base_hp += bonus_hp
 
 func _on_evolution_ready(hero_id: String, star_level: int) -> void:
+	_play_evolution_feedback(hero_id, star_level)
 	if run_state.needs_evolution_draft(hero_id, star_level):
 		_show_evolution_draft(hero_id, star_level)
 
@@ -1386,6 +1523,16 @@ func _update_lane_guides() -> void:
 		var lane_panel := lane_guides[lane_index]
 		lane_panel.position = Vector2((lane_width + gap) * lane_index, 6)
 		lane_panel.size = Vector2(lane_width, lane_height)
+		if lane_panel.get_child_count() >= 3:
+			var lane_fill := lane_panel.get_child(0) as ColorRect
+			var lane_shine := lane_panel.get_child(1) as ColorRect
+			var lane_marker := lane_panel.get_child(2) as ColorRect
+			if lane_fill != null:
+				lane_fill.size = lane_panel.size
+			if lane_shine != null:
+				lane_shine.size.x = lane_panel.size.x * 0.80
+			if lane_marker != null:
+				lane_marker.size.x = lane_panel.size.x * 0.76
 	leak_line.position = Vector2(0, enemy_layer.size.y - 28)
 	leak_line.size = Vector2(enemy_layer.size.x, 4)
 
@@ -1408,7 +1555,7 @@ func _spawn_beam(start: Vector2, finish: Vector2, color: Color, effect_id: Strin
 	effect_layer.add_child(beam)
 	var tween := create_tween()
 	tween.parallel().tween_property(beam, "modulate:a", 0.0, 0.32)
-	tween.parallel().tween_property(beam, "scale:x", 1.14, 0.32)
+	tween.parallel().tween_property(beam, "scale:x", 1.22, 0.32)
 	tween.finished.connect(beam.queue_free)
 
 func _spawn_burst(center: Vector2, color: Color, radius: float = 28.0, effect_id: String = "") -> void:
@@ -1428,7 +1575,7 @@ func _spawn_burst(center: Vector2, color: Color, radius: float = 28.0, effect_id
 	effect_layer.add_child(burst)
 	burst.scale = Vector2(0.55, 0.55)
 	var tween := create_tween()
-	tween.parallel().tween_property(burst, "scale", Vector2(1.38, 1.38), 0.30)
+	tween.parallel().tween_property(burst, "scale", Vector2(1.52, 1.52), 0.30)
 	tween.parallel().tween_property(burst, "modulate:a", 0.0, 0.30)
 	tween.finished.connect(burst.queue_free)
 
@@ -1454,7 +1601,7 @@ func _spawn_ring(center: Vector2, color: Color, radius: float = 70.0, effect_id:
 	effect_layer.add_child(ring)
 	ring.scale = Vector2(0.45, 0.45)
 	var tween := create_tween()
-	tween.parallel().tween_property(ring, "scale", Vector2(1.16, 1.16), 0.38)
+	tween.parallel().tween_property(ring, "scale", Vector2(1.24, 1.24), 0.38)
 	tween.parallel().tween_property(ring, "modulate:a", 0.0, 0.38)
 	tween.finished.connect(ring.queue_free)
 
@@ -1470,7 +1617,7 @@ func _spawn_spark(center: Vector2, color: Color, effect_id: String = "impact_spa
 	spark.pivot_offset = Vector2(9, 9)
 	effect_layer.add_child(spark)
 	var tween := create_tween()
-	tween.parallel().tween_property(spark, "scale", Vector2(2.1, 2.1), 0.26)
+	tween.parallel().tween_property(spark, "scale", Vector2(2.34, 2.34), 0.26)
 	tween.parallel().tween_property(spark, "modulate:a", 0.0, 0.26)
 	tween.finished.connect(spark.queue_free)
 
@@ -1497,17 +1644,45 @@ func _spawn_effect_sprite(center: Vector2, size_value: Vector2, effect_id: Strin
 	return true
 
 func _spawn_damage_number(center: Vector2, dealt: float, did_crit: bool) -> void:
+	var shadow := Label.new()
+	shadow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	shadow.text = _format_damage_number(dealt)
+	shadow.add_theme_font_size_override("font_size", 20 if not did_crit else 24)
+	shadow.add_theme_color_override("font_color", Color(0, 0, 0, 0.42))
+	shadow.position = center - Vector2(22, 24) + Vector2(2, 3)
+	effect_layer.add_child(shadow)
+
 	var label := Label.new()
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	label.text = _format_damage_number(dealt)
+	label.text = shadow.text
 	label.add_theme_font_size_override("font_size", 20 if not did_crit else 24)
 	label.add_theme_color_override("font_color", Color("fff6e0") if did_crit else Color("ffffff"))
 	label.position = center - Vector2(24, 28)
 	effect_layer.add_child(label)
+
+	if did_crit:
+		var crit_flash := ColorRect.new()
+		crit_flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		crit_flash.color = Color(1.0, 0.90, 0.58, 0.14)
+		crit_flash.position = center - Vector2(28, 28)
+		crit_flash.size = Vector2(56, 56)
+		effect_layer.add_child(crit_flash)
+		var flash_tween := create_tween()
+		flash_tween.parallel().tween_property(crit_flash, "scale", Vector2(1.36, 1.36), 0.24)
+		flash_tween.parallel().tween_property(crit_flash, "modulate:a", 0.0, 0.24)
+		flash_tween.finished.connect(crit_flash.queue_free)
+
+	var rise := -24 if did_crit else -18
+	var fade_time := 0.42 if did_crit else 0.34
+	var scale_target := Vector2(1.10, 1.10) if did_crit else Vector2.ONE
 	var tween := create_tween()
-	tween.parallel().tween_property(label, "position", label.position + Vector2(0, -18), 0.34)
-	tween.parallel().tween_property(label, "modulate:a", 0.0, 0.34)
+	tween.parallel().tween_property(label, "position", label.position + Vector2(0, rise), fade_time)
+	tween.parallel().tween_property(label, "scale", scale_target, 0.18)
+	tween.parallel().tween_property(label, "modulate:a", 0.0, fade_time)
+	tween.parallel().tween_property(shadow, "position", shadow.position + Vector2(0, rise), fade_time)
+	tween.parallel().tween_property(shadow, "modulate:a", 0.0, fade_time)
 	tween.finished.connect(label.queue_free)
+	tween.finished.connect(shadow.queue_free)
 
 func _format_damage_number(value: float) -> String:
 	if value >= 1000.0:
@@ -1516,11 +1691,12 @@ func _format_damage_number(value: float) -> String:
 
 func _make_hud_pill(parent: Node) -> Label:
 	var pill := Label.new()
-	pill.custom_minimum_size = Vector2(146, 38)
+	pill.custom_minimum_size = Vector2(154, 40)
 	pill.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	pill.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	pill.add_theme_stylebox_override("normal", _make_surface_style(Color("203446"), Color("9fc2d7"), 999))
+	pill.add_theme_stylebox_override("normal", _make_surface_style(Color("172836"), Color("7fb6d4"), 999))
 	pill.add_theme_color_override("font_color", Color("edf8ff"))
+	pill.add_theme_font_size_override("font_size", 13)
 	parent.add_child(pill)
 	return pill
 
@@ -1536,54 +1712,74 @@ func _make_utility_button() -> Button:
 func _make_quick_button(emblem: String) -> Button:
 	var button := Button.new()
 	button.custom_minimum_size = Vector2(82, 82)
-	button.add_theme_stylebox_override("normal", _make_button_style(Color("162735"), Color("8db6cb"), 24))
-	button.add_theme_stylebox_override("hover", _make_button_style(Color("203546"), Color("d9e7ef"), 24))
-	button.add_theme_stylebox_override("pressed", _make_button_style(Color("274151"), Color("edf8ff"), 24))
-	button.add_theme_color_override("font_color", Color("edf7ff"))
+	button.add_theme_stylebox_override("normal", _make_button_style(Color("122231"), Color("6b9eb8"), 24))
+	button.add_theme_stylebox_override("hover", _make_button_style(Color("183144"), Color("d9e7ef"), 24))
+	button.add_theme_stylebox_override("pressed", _make_button_style(Color("22445b"), Color("edf8ff"), 24))
+	button.add_theme_color_override("font_color", Color("eaf6ff"))
 	var content := VBoxContainer.new()
 	content.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	content.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	content.alignment = BoxContainer.ALIGNMENT_CENTER
-	content.add_theme_constant_override("separation", 5)
+	content.add_theme_constant_override("separation", 6)
 	button.add_child(content)
+	var icon_shell := PanelContainer.new()
+	icon_shell.custom_minimum_size = Vector2(34, 34)
+	icon_shell.add_theme_stylebox_override("panel", _make_surface_style(Color(1, 1, 1, 0.05), Color(1, 1, 1, 0.10), 16))
+	content.add_child(icon_shell)
 	var icon := IconBadge.new()
 	icon.custom_minimum_size = Vector2(24, 24)
+	icon.anchor_left = 0.5
+	icon.anchor_top = 0.5
+	icon.anchor_right = 0.5
+	icon.anchor_bottom = 0.5
+	icon.offset_left = -12
+	icon.offset_top = -12
+	icon.offset_right = 12
+	icon.offset_bottom = 12
 	icon.configure(Color("f3bc69"), Color("91562a"), Color("fff4d7"), "button", emblem)
-	content.add_child(icon)
+	icon_shell.add_child(icon)
 	var title := Label.new()
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	title.add_theme_font_size_override("font_size", 11)
+	title.add_theme_color_override("font_color", Color("eaf6ff"))
 	content.add_child(title)
 	button.set_meta("title_label", title)
 	return button
 
 func _build_action_button(button: Button, emblem: String, primary: Color, secondary: Color) -> Label:
-	button.add_theme_stylebox_override("normal", _make_button_style(primary, secondary, 18))
-	button.add_theme_stylebox_override("hover", _make_button_style(primary.lightened(0.08), secondary.lightened(0.08), 18))
-	button.add_theme_stylebox_override("pressed", _make_button_style(primary.darkened(0.06), secondary.darkened(0.06), 18))
+	button.add_theme_stylebox_override("normal", _make_button_style(primary, secondary, 20))
+	button.add_theme_stylebox_override("hover", _make_button_style(primary.lightened(0.08), secondary.lightened(0.08), 20))
+	button.add_theme_stylebox_override("pressed", _make_button_style(primary.darkened(0.06), secondary.darkened(0.06), 20))
 	button.add_theme_color_override("font_color", Color("fff8ef"))
-	button.custom_minimum_size = Vector2(154, 34)
+	button.custom_minimum_size = Vector2(154, 38)
 	var content := HBoxContainer.new()
 	content.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	content.offset_left = 4
-	content.offset_top = 3
-	content.offset_right = -4
-	content.offset_bottom = -3
+	content.offset_left = 8
+	content.offset_top = 4
+	content.offset_right = -8
+	content.offset_bottom = -4
 	content.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	content.alignment = BoxContainer.ALIGNMENT_CENTER
-	content.add_theme_constant_override("separation", 4)
+	content.add_theme_constant_override("separation", 6)
 	button.add_child(content)
-	var icon_slot := CenterContainer.new()
-	icon_slot.custom_minimum_size = Vector2(22, 22)
-	content.add_child(icon_slot)
+	var icon_frame := PanelContainer.new()
+	icon_frame.custom_minimum_size = Vector2(26, 26)
+	icon_frame.add_theme_stylebox_override("panel", _make_surface_style(Color(1, 1, 1, 0.08), Color(1, 1, 1, 0.12), 14))
+	content.add_child(icon_frame)
 	var icon := IconBadge.new()
 	icon.custom_minimum_size = Vector2(18, 18)
-	icon.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	icon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	icon.anchor_left = 0.5
+	icon.anchor_top = 0.5
+	icon.anchor_right = 0.5
+	icon.anchor_bottom = 0.5
+	icon.offset_left = -9
+	icon.offset_top = -9
+	icon.offset_right = 9
+	icon.offset_bottom = 9
 	icon.configure(primary.lightened(0.1), secondary.darkened(0.05), Color("fff4dd"), "button", emblem)
-	icon_slot.add_child(icon)
+	icon_frame.add_child(icon)
 	var copy := VBoxContainer.new()
 	copy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	copy.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -1606,6 +1802,42 @@ func _build_action_button(button: Button, emblem: String, primary: Color, second
 	button.set_meta("title_label", title)
 	button.set_meta("caption_label", caption)
 	return cost
+
+func _play_evolution_feedback(hero_id: String, star_level: int) -> void:
+	if board_manager == null or effect_layer == null:
+		return
+	var focus_piece: Control = null
+	for piece in board_manager.get_active_pieces():
+		if piece.hero_def != null and str(piece.hero_def.id) == hero_id and int(piece.star_level) == star_level:
+			focus_piece = piece as Control
+			break
+	if focus_piece == null:
+		return
+	var piece_rect: Rect2 = focus_piece.get_global_rect()
+	var center := _to_effect_local(piece_rect.position + (piece_rect.size * 0.5))
+	var aura := ColorRect.new()
+	aura.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	aura.color = Color(1.0, 0.88, 0.52, 0.12)
+	aura.position = center - Vector2(44, 44)
+	aura.size = Vector2(88, 88)
+	effect_layer.add_child(aura)
+	var aura_tween := create_tween()
+	aura_tween.parallel().tween_property(aura, "scale", Vector2(1.34, 1.34), 0.34)
+	aura_tween.parallel().tween_property(aura, "modulate:a", 0.0, 0.34)
+	aura_tween.finished.connect(aura.queue_free)
+	_spawn_ring(center, Color("ffd46f"), 118.0, "solar_flare")
+	_spawn_burst(center, Color("ffd27a"), 72.0, "arcane_burst")
+	var banner := Label.new()
+	banner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	banner.text = "STAR %d" % star_level
+	banner.add_theme_font_size_override("font_size", 18)
+	banner.add_theme_color_override("font_color", Color("fff4d1"))
+	banner.position = center + Vector2(-32, -58)
+	effect_layer.add_child(banner)
+	var banner_tween := create_tween()
+	banner_tween.parallel().tween_property(banner, "position", banner.position + Vector2(0, -22), 0.42)
+	banner_tween.parallel().tween_property(banner, "modulate:a", 0.0, 0.42)
+	banner_tween.finished.connect(banner.queue_free)
 
 func _make_info_panel(position_value: Vector2, size_value: Vector2) -> PanelContainer:
 	var panel := PanelContainer.new()

@@ -1,4 +1,4 @@
-﻿class_name ArtCatalog
+class_name ArtCatalog
 extends RefCounted
 
 const HERO_TEXTURE_BY_ID := {
@@ -44,7 +44,7 @@ const EFFECT_TEXTURE_BY_ID := {
 	"chain_arc": "res://assets/generated/effects/chain_arc.svg"
 }
 
-const BACKGROUND_BATTLEFIELD := "res://assets/generated/backgrounds/forge_hall_lane.png"
+const BACKGROUND_BATTLEFIELD := "res://assets/generated/backgrounds/forge_hall_lane.jpg"
 const FALLBACK_HERO := "res://assets/generated/heroes/frost_oracle.png"
 const FALLBACK_ENEMY := "res://assets/generated/enemies/scout.svg"
 const FALLBACK_EFFECT := "res://assets/generated/effects/impact_spark.svg"

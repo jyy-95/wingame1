@@ -19,6 +19,8 @@ var _icon: IconBadge
 var _name_label: Label
 var _star_label: Label
 var _star_badge: PanelContainer
+var _shine: ColorRect
+var _bottom_ribbon: PanelContainer
 
 func _ready() -> void:
 	custom_minimum_size = Vector2(68, 82)
@@ -39,6 +41,17 @@ func _ready() -> void:
 	_icon.offset_right = -3
 	_icon.offset_bottom = -3
 	body.add_child(_icon)
+
+	_shine = ColorRect.new()
+	_shine.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_shine.anchor_right = 1.0
+	_shine.anchor_bottom = 0.0
+	_shine.offset_left = 4
+	_shine.offset_top = 4
+	_shine.offset_right = -4
+	_shine.offset_bottom = 30
+	_shine.color = Color(1, 1, 1, 0.05)
+	body.add_child(_shine)
 
 	_star_badge = PanelContainer.new()
 	_star_badge.anchor_left = 1.0
@@ -77,10 +90,27 @@ func _ready() -> void:
 	_star_label.add_theme_font_size_override("font_size", 8)
 	_star_badge.add_child(_star_label)
 
+	_bottom_ribbon = PanelContainer.new()
+	_bottom_ribbon.anchor_left = 0.0
+	_bottom_ribbon.anchor_top = 1.0
+	_bottom_ribbon.anchor_right = 1.0
+	_bottom_ribbon.anchor_bottom = 1.0
+	_bottom_ribbon.offset_left = 4
+	_bottom_ribbon.offset_top = -20
+	_bottom_ribbon.offset_right = -4
+	_bottom_ribbon.offset_bottom = -4
+	_bottom_ribbon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	body.add_child(_bottom_ribbon)
+
 	_name_label = Label.new()
-	_name_label.visible = false
+	_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_name_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_name_label.add_theme_font_size_override("font_size", 10)
+	_name_label.add_theme_color_override("font_color", Color("f8fbff"))
 	_name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(_name_label)
+	_bottom_ribbon.add_child(_name_label)
 
 	_update_visuals()
 
@@ -127,14 +157,55 @@ func _get_drag_data(_at_position: Vector2) -> Variant:
 		return null
 	var preview := PanelContainer.new()
 	preview.custom_minimum_size = custom_minimum_size
-	preview.modulate = Color(1, 1, 1, 0.88)
+	preview.modulate = Color(1, 1, 1, 0.94)
+	var preview_style := StyleBoxFlat.new()
+	preview_style.bg_color = Color(0.09, 0.15, 0.21, 0.92)
+	preview_style.border_color = Color("f0c47a")
+	preview_style.border_width_left = 2
+	preview_style.border_width_top = 2
+	preview_style.border_width_right = 2
+	preview_style.border_width_bottom = 2
+	preview_style.corner_radius_top_left = 22
+	preview_style.corner_radius_top_right = 22
+	preview_style.corner_radius_bottom_left = 22
+	preview_style.corner_radius_bottom_right = 22
+	preview_style.shadow_color = Color(0, 0, 0, 0.24)
+	preview_style.shadow_size = 10
+	preview_style.shadow_offset = Vector2(0, 4)
+	preview.add_theme_stylebox_override("panel", preview_style)
+	var preview_body := MarginContainer.new()
+	preview_body.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	preview_body.add_theme_constant_override("margin_left", 4)
+	preview_body.add_theme_constant_override("margin_top", 4)
+	preview_body.add_theme_constant_override("margin_right", 4)
+	preview_body.add_theme_constant_override("margin_bottom", 4)
+	preview.add_child(preview_body)
+	var preview_box := VBoxContainer.new()
+	preview_box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	preview_box.add_theme_constant_override("separation", 4)
+	preview_body.add_child(preview_box)
+	var preview_icon := IconBadge.new()
+	preview_icon.custom_minimum_size = Vector2(58, 58)
+	preview_icon.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	preview_box.add_child(preview_icon)
 	var label := Label.new()
-	label.text = get_display_label()
+	label.text = _name_label.text
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	label.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	preview.add_child(label)
+	label.add_theme_font_size_override("font_size", 10)
+	label.add_theme_color_override("font_color", Color("f8fbff"))
+	preview_box.add_child(label)
+	var preview_color: Color = hero_def.color if hero_def != null else Color("4e6983")
+	var hero_id: String = str(hero_def.id) if hero_def != null else ""
+	var animation_frames := ArtCatalog.get_hero_animation_frames(hero_id)
+	if not animation_frames.is_empty():
+		preview_icon.configure_with_animation(animation_frames, 12.0, preview_color, hero_id)
+	else:
+		var texture := ArtCatalog.get_hero_texture(hero_id)
+		if texture != null:
+			preview_icon.configure_with_texture(texture, preview_color, true, hero_id)
+		else:
+			preview_icon.configure(preview_color.lightened(0.18), preview_color.darkened(0.24), Color("f5e4d1"), "avatar")
 	set_drag_preview(preview)
 	return {"piece": self}
 
@@ -179,24 +250,24 @@ func _update_visuals() -> void:
 		base_color = hero_def.color
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(base_color.r, base_color.g, base_color.b, 0.24)
-	style.border_color = base_color.lightened(0.60)
-	style.border_width_left = 1
-	style.border_width_top = 1
-	style.border_width_right = 1
-	style.border_width_bottom = 1
-	style.corner_radius_top_left = 18
-	style.corner_radius_top_right = 18
-	style.corner_radius_bottom_left = 18
-	style.corner_radius_bottom_right = 18
-	style.shadow_color = Color(0, 0, 0, 0.20)
-	style.shadow_size = 8
-	style.shadow_offset = Vector2(0, 3)
+	style.border_color = base_color.lightened(0.72)
+	style.border_width_left = 2
+	style.border_width_top = 2
+	style.border_width_right = 2
+	style.border_width_bottom = 2
+	style.corner_radius_top_left = 20
+	style.corner_radius_top_right = 20
+	style.corner_radius_bottom_left = 20
+	style.corner_radius_bottom_right = 20
+	style.shadow_color = Color(0, 0, 0, 0.24)
+	style.shadow_size = 10
+	style.shadow_offset = Vector2(0, 4)
 	style.anti_aliasing = true
 	style.anti_aliasing_size = 1.2
 	add_theme_stylebox_override("panel", style)
 	var badge_style := StyleBoxFlat.new()
-	badge_style.bg_color = base_color.darkened(0.36)
-	badge_style.border_color = base_color.lightened(0.55)
+	badge_style.bg_color = base_color.darkened(0.28)
+	badge_style.border_color = base_color.lightened(0.78)
 	badge_style.border_width_left = 1
 	badge_style.border_width_top = 1
 	badge_style.border_width_right = 1
@@ -211,6 +282,25 @@ func _update_visuals() -> void:
 	badge_style.anti_aliasing = true
 	badge_style.anti_aliasing_size = 1.1
 	_star_badge.add_theme_stylebox_override("panel", badge_style)
+	if _bottom_ribbon != null:
+		var ribbon_color := base_color.darkened(0.44)
+		var ribbon_style := StyleBoxFlat.new()
+		ribbon_style.bg_color = Color(ribbon_color.r, ribbon_color.g, ribbon_color.b, 0.92)
+		ribbon_style.border_color = base_color.lightened(0.30)
+		ribbon_style.border_width_top = 1
+		ribbon_style.corner_radius_top_left = 10
+		ribbon_style.corner_radius_top_right = 10
+		ribbon_style.corner_radius_bottom_left = 12
+		ribbon_style.corner_radius_bottom_right = 12
+		ribbon_style.shadow_color = Color(0, 0, 0, 0.18)
+		ribbon_style.shadow_size = 4
+		ribbon_style.shadow_offset = Vector2(0, 1)
+		ribbon_style.anti_aliasing = true
+		ribbon_style.anti_aliasing_size = 1.1
+		_bottom_ribbon.add_theme_stylebox_override("panel", ribbon_style)
+	if _shine != null:
+		var shine_color := base_color.lightened(0.55)
+		_shine.color = Color(shine_color.r, shine_color.g, shine_color.b, 0.08)
 	var hero_id: String = str(hero_def.id) if hero_def != null else ""
 	var animation_frames := ArtCatalog.get_hero_animation_frames(hero_id)
 	if not animation_frames.is_empty():
